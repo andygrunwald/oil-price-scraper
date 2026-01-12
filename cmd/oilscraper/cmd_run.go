@@ -77,6 +77,9 @@ func runCmd() *cobra.Command {
 			// Create HTTP server
 			httpServer := http.NewServer(cfg.HTTPAddr, s, sched, db, logger)
 
+			// Wire Prometheus metrics to scraper
+			s.SetPrometheusMetrics(httpServer.Metrics())
+
 			// Setup signal handling
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()

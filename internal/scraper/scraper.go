@@ -13,6 +13,15 @@ import (
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
 )
 
+// PrometheusMetrics defines the interface for recording Prometheus metrics.
+type PrometheusMetrics interface {
+	RecordAPIRequest(provider, status string, duration float64)
+	RecordLastScrape(provider string, timestamp float64)
+	RecordCurrentPrice(provider, scope, productType string, price float64)
+	RecordDBOperation(operation, status string)
+	RecordPricesStored(provider string, count float64)
+}
+
 // Metrics holds scraping metrics for a provider.
 type Metrics struct {
 	mu                sync.RWMutex
@@ -59,6 +68,7 @@ type Scraper struct {
 	db               *database.DB
 	providers        map[string]api.Provider
 	providerMetrics  map[string]*Metrics
+	promMetrics      PrometheusMetrics
 	storeRawResponse bool
 	logger           zerolog.Logger
 	mu               sync.RWMutex
@@ -99,6 +109,11 @@ func (s *Scraper) GetMetrics(providerName string) *Metrics {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.providerMetrics[providerName]
+}
+
+// SetPrometheusMetrics sets the Prometheus metrics recorder.
+func (s *Scraper) SetPrometheusMetrics(m PrometheusMetrics) {
+	s.promMetrics = m
 }
 
 // ScrapeAll scrapes current prices from all registered providers.
@@ -170,6 +185,15 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 	}
 	metrics.mu.Unlock()
 
+	// Record Prometheus metrics for API request
+	if s.promMetrics != nil {
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		s.promMetrics.RecordAPIRequest(providerName, status, duration.Seconds())
+	}
+
 	if err != nil {
 		s.logger.Error().
 			Err(err).
@@ -179,6 +203,11 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 		return err
 	}
 
+	// Record successful scrape timestamp
+	if s.promMetrics != nil {
+		s.promMetrics.RecordLastScrape(providerName, float64(time.Now().Unix()))
+	}
+
 	s.logger.Info().
 		Str("provider", providerName).
 		Int("count", len(prices)).
@@ -186,6 +215,7 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 		Msg("fetched prices")
 
 	// Store prices in database
+	var storedCount float64
 	for _, price := range prices {
 		// Check if already exists
 		exists, err := s.db.ExistsForDate(ctx, price.Provider, price.ProductType, price.Date, price.ZipCode)
@@ -196,7 +226,13 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 				Str("product_type", price.ProductType).
 				Str("date", price.Date.Format("2006-01-02")).
 				Msg("failed to check existence")
+			if s.promMetrics != nil {
+				s.promMetrics.RecordDBOperation("select", "error")
+			}
 			continue
+		}
+		if s.promMetrics != nil {
+			s.promMetrics.RecordDBOperation("select", "success")
 		}
 
 		if exists {
@@ -215,7 +251,21 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 				Str("product_type", price.ProductType).
 				Str("date", price.Date.Format("2006-01-02")).
 				Msg("failed to insert price")
+			if s.promMetrics != nil {
+				s.promMetrics.RecordDBOperation("insert", "error")
+			}
+		} else {
+			storedCount++
+			if s.promMetrics != nil {
+				s.promMetrics.RecordDBOperation("insert", "success")
+				s.promMetrics.RecordCurrentPrice(price.Provider, string(price.Scope), price.ProductType, price.PricePer100L)
+			}
 		}
+	}
+
+	// Record total prices stored for this provider
+	if s.promMetrics != nil && storedCount > 0 {
+		s.promMetrics.RecordPricesStored(providerName, storedCount)
 	}
 
 	return nil

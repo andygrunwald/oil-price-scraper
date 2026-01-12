@@ -67,11 +67,13 @@ type ProviderStatus struct {
 
 // StatusResponse is the response for the /status endpoint.
 type StatusResponse struct {
-	Status        string                    `json:"status"`
-	UptimeSeconds int64                     `json:"uptime_seconds"`
-	NextScrapeAt  *time.Time                `json:"next_scrape_at"`
-	Providers     map[string]ProviderStatus `json:"providers"`
-	Database      DatabaseStatus            `json:"database"`
+	Status                string                    `json:"status"`
+	UptimeSeconds         int64                     `json:"uptime_seconds"`
+	SchedulerRunning      bool                      `json:"scheduler_running"`
+	NextScrapeAt          *time.Time                `json:"next_scrape_at,omitempty"`
+	LastScheduledScrapeAt *time.Time                `json:"last_scheduled_scrape_at,omitempty"`
+	Providers             map[string]ProviderStatus `json:"providers"`
+	Database              DatabaseStatus            `json:"database"`
 }
 
 // DatabaseStatus holds the database connection status.

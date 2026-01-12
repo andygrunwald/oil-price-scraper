@@ -40,8 +40,10 @@ func (h *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Providers:     make(map[string]models.ProviderStatus),
 	}
 
-	// Get next scrape time from scheduler
+	// Get scheduler status
 	if h.scheduler != nil {
+		response.SchedulerRunning = h.scheduler.IsRunning()
+		response.LastScheduledScrapeAt = h.scheduler.LastScrapeAt()
 		nextScrape := h.scheduler.NextScrapeAt()
 		if !nextScrape.IsZero() {
 			response.NextScrapeAt = &nextScrape

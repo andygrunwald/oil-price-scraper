@@ -39,10 +39,3 @@ var userAgents = []string{
 func Random() string {
 	return userAgents[rand.Intn(len(userAgents))]
 }
-
-// All returns all available User-Agent strings.
-func All() []string {
-	result := make([]string, len(userAgents))
-	copy(result, userAgents)
-	return result
-}
