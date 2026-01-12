@@ -1,8 +1,8 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
-# Install git for go modules that need it
-RUN apk add --no-cache git
+# Install git and ca-certificates
+RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
@@ -23,14 +23,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     -o /oilscraper \
     ./cmd/oilscraper
 
-# Runtime stage
-FROM gcr.io/distroless/static-debian12:nonroot
+# Runtime stage - using scratch for minimal footprint
+FROM scratch
+
+# Copy CA certificates for HTTPS requests
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy the binary
 COPY --from=builder /oilscraper /oilscraper
-
-# Use non-root user for security
-USER nonroot:nonroot
 
 # Expose metrics/status port
 EXPOSE 8080
