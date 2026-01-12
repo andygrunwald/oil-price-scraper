@@ -239,7 +239,7 @@ CREATE TABLE oil_prices (
 
 - Go 1.23+
 - Docker & Docker Compose
-- MySQL 8.0+ (or use Docker Compose)
+- MySQL 8.4+ (or use Docker Compose)
 
 ### Local Development
 

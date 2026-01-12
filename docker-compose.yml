@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.4.7
     container_name: oilscraper-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
