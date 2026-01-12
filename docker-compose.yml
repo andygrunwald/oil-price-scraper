@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: oilscraper-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: oilprices
+      MYSQL_USER: oilscraper
+      MYSQL_PASSWORD: oilscraper
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - oilscraper
+
+  oilscraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: dev
+        COMMIT: local
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    container_name: oilscraper-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_DSN: "oilscraper:oilscraper@tcp(mysql:3306)/oilprices?parseTime=true"
+      LOG_LEVEL: debug
+      LOG_FORMAT: console
+      HTTP_ADDR: ":8080"
+      ZIP_CODE: "47259"
+      ORDER_AMOUNT: "3000"
+    ports:
+      - "8080:8080"
+    networks:
+      - oilscraper
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  oilscraper:
+    driver: bridge

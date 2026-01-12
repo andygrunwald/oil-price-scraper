@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.heizoel24.de)",
+      "WebFetch(domain:api.hoyer.de)",
+      "WebFetch(domain:community.home-assistant.io)",
+      "WebFetch(domain:forum.iobroker.net)",
+      "Bash(go mod init:*)",
+      "Bash(go get:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(go vet:*)",
+      "Bash(go fmt:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
