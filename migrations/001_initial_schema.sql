@@ -1,28 +1,38 @@
 -- Oil Price Scraper - Initial Schema
--- Creates the database and oil_prices table
+-- Creates the oil_prices table for PostgreSQL
 
-CREATE DATABASE IF NOT EXISTS `oilprices`;
-USE `oilprices`;
-
-CREATE TABLE IF NOT EXISTS `oil_prices` (
-    `id`              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `provider`        VARCHAR(50) NOT NULL COMMENT 'Source API (e.g., heizoel24, hoyer)',
-    `product_type`    VARCHAR(50) NOT NULL DEFAULT 'standard' COMMENT 'Product variant (e.g., standard, bestpreis, eco)',
-    `price_date`      DATE NOT NULL COMMENT 'Date the price is valid for',
-    `price_per_100l`  DECIMAL(10, 4) NOT NULL COMMENT 'Price in EUR per 100 liters',
-    `currency`        VARCHAR(10) NOT NULL DEFAULT 'EUR' COMMENT 'Currency code',
-    `scope`           ENUM('local', 'national') NOT NULL COMMENT 'Geographical scope of the price',
-    `zip_code`        VARCHAR(10) DEFAULT NULL COMMENT 'Zip code for local prices (NULL for national)',
-    `raw_response`    JSON DEFAULT NULL COMMENT 'Original JSON response from API',
-    `fetched_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'When the API was called',
-    `created_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Row creation timestamp',
+CREATE TABLE IF NOT EXISTS oil_prices (
+    id              BIGSERIAL PRIMARY KEY,
+    provider        VARCHAR(50) NOT NULL,
+    product_type    VARCHAR(50) NOT NULL DEFAULT 'standard',
+    price_date      DATE NOT NULL,
+    price_per_100l  DECIMAL(10, 4) NOT NULL,
+    currency        VARCHAR(10) NOT NULL DEFAULT 'EUR',
+    scope           VARCHAR(10) NOT NULL CHECK (scope IN ('local', 'national')),
+    zip_code        VARCHAR(10) DEFAULT NULL,
+    raw_response    JSONB DEFAULT NULL,
+    fetched_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- Unique constraint to prevent duplicate entries
-    UNIQUE KEY `unique_provider_product_date` (`provider`, `product_type`, `price_date`, `zip_code`),
+    -- Note: PostgreSQL treats NULLs as distinct in unique constraints by default
+    CONSTRAINT unique_provider_product_date UNIQUE NULLS NOT DISTINCT (provider, product_type, price_date, zip_code)
+);
 
-    -- Indexes for common queries
-    INDEX `idx_price_date` (`price_date`),
-    INDEX `idx_provider` (`provider`),
-    INDEX `idx_product_type` (`product_type`),
-    INDEX `idx_scope` (`scope`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Indexes for common queries
+CREATE INDEX IF NOT EXISTS idx_price_date ON oil_prices (price_date);
+CREATE INDEX IF NOT EXISTS idx_provider ON oil_prices (provider);
+CREATE INDEX IF NOT EXISTS idx_product_type ON oil_prices (product_type);
+CREATE INDEX IF NOT EXISTS idx_scope ON oil_prices (scope);
+
+-- Column comments
+COMMENT ON COLUMN oil_prices.provider IS 'Source API (e.g., heizoel24, hoyer)';
+COMMENT ON COLUMN oil_prices.product_type IS 'Product variant (e.g., standard, bestpreis, eco)';
+COMMENT ON COLUMN oil_prices.price_date IS 'Date the price is valid for';
+COMMENT ON COLUMN oil_prices.price_per_100l IS 'Price in EUR per 100 liters';
+COMMENT ON COLUMN oil_prices.currency IS 'Currency code';
+COMMENT ON COLUMN oil_prices.scope IS 'Geographical scope of the price';
+COMMENT ON COLUMN oil_prices.zip_code IS 'Zip code for local prices (NULL for national)';
+COMMENT ON COLUMN oil_prices.raw_response IS 'Original JSON response from API';
+COMMENT ON COLUMN oil_prices.fetched_at IS 'When the API was called';
+COMMENT ON COLUMN oil_prices.created_at IS 'Row creation timestamp';

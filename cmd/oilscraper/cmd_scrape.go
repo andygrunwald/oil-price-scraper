@@ -23,8 +23,8 @@ func scrapeCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger := setupLogger()
 
-			if cfg.MySQLDSN == "" {
-				return fmt.Errorf("--mysql-dsn is required")
+			if cfg.PostgresDSN == "" {
+				return fmt.Errorf("--postgres-dsn is required")
 			}
 
 			// Parse providers
@@ -38,7 +38,7 @@ func scrapeCmd() *cobra.Command {
 				Msg("running one-time scrape")
 
 			// Connect to database
-			db, err := database.New(cfg.MySQLDSN, logger)
+			db, err := database.New(cfg.PostgresDSN, logger)
 			if err != nil {
 				return fmt.Errorf("connecting to database: %w", err)
 			}

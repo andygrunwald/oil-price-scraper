@@ -42,7 +42,7 @@ Features:
 	}
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfg.MySQLDSN, "mysql-dsn", cfg.MySQLDSN, "MySQL connection string")
+	rootCmd.PersistentFlags().StringVar(&cfg.PostgresDSN, "postgres-dsn", cfg.PostgresDSN, "PostgreSQL connection string")
 	rootCmd.PersistentFlags().StringVar(&cfg.LogLevel, "log-level", cfg.LogLevel, "Log level (debug, info, warn, error)")
 	rootCmd.PersistentFlags().StringVar(&cfg.LogFormat, "log-format", cfg.LogFormat, "Log format (json, console)")
 	rootCmd.PersistentFlags().BoolVar(&cfg.StoreRawResponse, "store-raw-response", cfg.StoreRawResponse, "Store raw API responses in database")

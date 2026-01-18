@@ -11,7 +11,7 @@
 
 **Never miss a dip in heating oil prices again.**
 
-A Go-based continuous scraper service that collects heating oil prices from multiple German APIs, stores them in MySQL, and exposes Prometheus metrics for monitoring.
+A Go-based continuous scraper service that collects heating oil prices from multiple German APIs, stores them in PostgreSQL, and exposes Prometheus metrics for monitoring.
 
 ## Features
 
@@ -22,7 +22,7 @@ A Go-based continuous scraper service that collects heating oil prices from mult
 - **Prometheus Metrics**: Full observability with `/metrics` endpoint
 - **Status Endpoint**: JSON status at `/status` for operational visibility
 - **Structured Logging**: JSON or console output with zerolog
-- **Docker Ready**: Multi-stage build with distroless runtime image
+- **Docker Ready**: Multi-stage build with scratch runtime image
 - **CI/CD Ready**: GitHub Actions for testing, linting, and Docker builds
 
 ## Quick Start
@@ -47,7 +47,7 @@ curl http://localhost:8080/status
 docker pull ghcr.io/andygrunwald/oil-price-scraper:latest
 
 docker run -d \
-  -e MYSQL_DSN="user:password@tcp(host:3306)/oilprices?parseTime=true" \
+  -e POSTGRES_DSN="postgres://user:password@host:5432/oilprices?sslmode=disable" \
   -p 8080:8080 \
   ghcr.io/andygrunwald/oil-price-scraper:latest
 ```
@@ -81,7 +81,7 @@ Start the continuous scraper with daily scheduling:
 
 ```bash
 oilscraper run \
-  --mysql-dsn "user:password@tcp(localhost:3306)/oilprices?parseTime=true" \
+  --postgres-dsn "postgres://user:password@localhost:5432/oilprices?sslmode=disable" \
   --scrape-hour 6 \
   --providers heizoel24,hoyer
 ```
@@ -92,7 +92,7 @@ Run a one-time scrape:
 
 ```bash
 oilscraper scrape \
-  --mysql-dsn "user:password@tcp(localhost:3306)/oilprices?parseTime=true" \
+  --postgres-dsn "postgres://user:password@localhost:5432/oilprices?sslmode=disable" \
   --providers heizoel24,hoyer
 ```
 
@@ -102,7 +102,7 @@ Backfill historical data:
 
 ```bash
 oilscraper backfill \
-  --mysql-dsn "user:password@tcp(localhost:3306)/oilprices?parseTime=true" \
+  --postgres-dsn "postgres://user:password@localhost:5432/oilprices?sslmode=disable" \
   --provider heizoel24 \
   --from 2024-01-01 \
   --to 2024-12-31
@@ -114,7 +114,7 @@ oilscraper backfill \
 
 | Flag | Env Variable | Default | Description |
 |------|--------------|---------|-------------|
-| `--mysql-dsn` | `MYSQL_DSN` | - | MySQL connection string (required) |
+| `--postgres-dsn` | `POSTGRES_DSN` | - | PostgreSQL connection string (required) |
 | `--log-level` | `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
 | `--log-format` | `LOG_FORMAT` | `json` | Log format (json, console) |
 | `--store-raw-response` | `STORE_RAW_RESPONSE` | `true` | Store raw API responses |
@@ -214,23 +214,24 @@ Returns `200 OK` if the service is running.
 
 ```sql
 CREATE TABLE oil_prices (
-    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     provider        VARCHAR(50) NOT NULL,
     product_type    VARCHAR(50) NOT NULL DEFAULT 'standard',
     price_date      DATE NOT NULL,
     price_per_100l  DECIMAL(10, 4) NOT NULL,
     currency        VARCHAR(10) NOT NULL DEFAULT 'EUR',
-    scope           ENUM('local', 'national') NOT NULL,
+    scope           VARCHAR(10) NOT NULL CHECK (scope IN ('local', 'national')),
     zip_code        VARCHAR(10) DEFAULT NULL,
-    raw_response    JSON DEFAULT NULL,
+    raw_response    JSONB DEFAULT NULL,
     fetched_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE KEY unique_provider_product_date (provider, product_type, price_date, zip_code),
-    INDEX idx_price_date (price_date),
-    INDEX idx_provider (provider),
-    INDEX idx_product_type (product_type)
+    CONSTRAINT unique_provider_product_date UNIQUE NULLS NOT DISTINCT (provider, product_type, price_date, zip_code)
 );
+
+CREATE INDEX idx_price_date ON oil_prices (price_date);
+CREATE INDEX idx_provider ON oil_prices (provider);
+CREATE INDEX idx_product_type ON oil_prices (product_type);
 ```
 
 ## Development
@@ -239,17 +240,17 @@ CREATE TABLE oil_prices (
 
 - Go 1.25+
 - Docker & Docker Compose
-- MySQL 8.4+ (or use Docker Compose)
+- PostgreSQL 18+ (or use Docker Compose)
 
 ### Local Development
 
 ```bash
-# Start MySQL
-docker-compose up -d mysql
+# Start PostgreSQL
+docker-compose up -d postgres
 
 # Run the scraper locally
 go run ./cmd/oilscraper run \
-  --mysql-dsn "oilscraper:oilscraper@tcp(localhost:3306)/oilprices?parseTime=true" \
+  --postgres-dsn "postgres://oilscraper:oilscraper@localhost:5432/oilprices?sslmode=disable" \
   --log-format console \
   --log-level debug
 
@@ -274,12 +275,12 @@ docker-compose up --build
 # View logs
 docker-compose logs -f oilscraper
 
-# Access MySQL
-docker exec -it oilscraper-mysql mysql -uoilscraper -poilscraper oilprices
+# Access PostgreSQL
+docker exec -it oilscraper-postgres psql -U oilscraper -d oilprices
 
 # Query prices
-docker exec -it oilscraper-mysql mysql -uoilscraper -poilscraper oilprices \
-  -e "SELECT * FROM oil_prices ORDER BY created_at DESC LIMIT 10;"
+docker exec -it oilscraper-postgres psql -U oilscraper -d oilprices \
+  -c "SELECT * FROM oil_prices ORDER BY created_at DESC LIMIT 10;"
 ```
 
 ### Project Structure
@@ -292,7 +293,7 @@ oil-price-scraper/
 │   │   ├── heizoel24/       # HeizOel24 provider
 │   │   └── hoyer/           # Hoyer provider
 │   ├── config/              # Configuration
-│   ├── database/            # MySQL operations
+│   ├── database/            # PostgreSQL operations
 │   ├── http/                # HTTP server & handlers
 │   ├── models/              # Shared data types
 │   ├── scheduler/           # Daily scheduler

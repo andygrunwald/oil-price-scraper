@@ -10,8 +10,8 @@ import (
 
 // Config holds all configuration for the oil price scraper.
 type Config struct {
-	// MySQL connection string
-	MySQLDSN string
+	// PostgreSQL connection string
+	PostgresDSN string
 	// Log level (debug, info, warn, error)
 	LogLevel string
 	// Log format (json, console)
@@ -49,7 +49,7 @@ type BackfillConfig struct {
 // DefaultConfig returns a Config with default values.
 func DefaultConfig() *Config {
 	return &Config{
-		MySQLDSN:         "",
+		PostgresDSN:      "",
 		LogLevel:         "info",
 		LogFormat:        "json",
 		StoreRawResponse: true,
@@ -68,8 +68,8 @@ func DefaultConfig() *Config {
 
 // LoadFromEnv loads configuration from environment variables.
 func (c *Config) LoadFromEnv() {
-	if v := os.Getenv("MYSQL_DSN"); v != "" {
-		c.MySQLDSN = v
+	if v := os.Getenv("POSTGRES_DSN"); v != "" {
+		c.PostgresDSN = v
 	}
 	if v := os.Getenv("LOG_LEVEL"); v != "" {
 		c.LogLevel = v

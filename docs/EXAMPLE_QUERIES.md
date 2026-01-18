@@ -1,6 +1,6 @@
 # Example SQL Queries
 
-This document contains useful SQL queries for analyzing oil price data stored in the `oil_prices` table.
+This document contains useful SQL queries for analyzing oil price data stored in the `oil_prices` table (PostgreSQL).
 
 ## Count Prices by Provider
 
@@ -8,8 +8,8 @@ Get the total number of price records for a specific provider. Useful for monito
 
 ```sql
 SELECT COUNT(*)
-FROM `oil_prices`
-WHERE `provider` = 'heizoel24';
+FROM oil_prices
+WHERE provider = 'heizoel24';
 ```
 
 **Use cases:**
@@ -23,19 +23,19 @@ Retrieve the most recent price for a specific provider. Useful for displaying cu
 
 ```sql
 SELECT
-    `id`,
-    `provider`,
-    `product_type`,
-    `price_date`,
-    `price_per_100l`,
-    `currency`,
-    `scope`,
-    `zip_code`,
-    `fetched_at`,
-    `created_at`
-FROM `oil_prices`
-WHERE `provider` = 'heizoel24'
-ORDER BY `price_date` DESC, `created_at` DESC
+    id,
+    provider,
+    product_type,
+    price_date,
+    price_per_100l,
+    currency,
+    scope,
+    zip_code,
+    fetched_at,
+    created_at
+FROM oil_prices
+WHERE provider = 'heizoel24'
+ORDER BY price_date DESC, created_at DESC
 LIMIT 1;
 ```
 
@@ -51,21 +51,21 @@ Query all prices for a provider within a specific date range. Useful for generat
 
 ```sql
 SELECT
-    `id`,
-    `provider`,
-    `product_type`,
-    `price_date`,
-    `price_per_100l`,
-    `currency`,
-    `scope`,
-    `zip_code`,
-    `fetched_at`,
-    `created_at`
-FROM `oil_prices`
-WHERE `provider` = 'heizoel24'
-    AND `price_date` >= '2024-01-01'
-    AND `price_date` <= '2024-12-31'
-ORDER BY `price_date` ASC;
+    id,
+    provider,
+    product_type,
+    price_date,
+    price_per_100l,
+    currency,
+    scope,
+    zip_code,
+    fetched_at,
+    created_at
+FROM oil_prices
+WHERE provider = 'heizoel24'
+    AND price_date >= '2024-01-01'
+    AND price_date <= '2024-12-31'
+ORDER BY price_date ASC;
 ```
 
 **Use cases:**
@@ -81,40 +81,40 @@ ORDER BY `price_date` ASC;
 
 ```sql
 SELECT
-    DATE_FORMAT(`price_date`, '%Y-%m') AS `month`,
-    `provider`,
-    AVG(`price_per_100l`) AS `avg_price`,
-    MIN(`price_per_100l`) AS `min_price`,
-    MAX(`price_per_100l`) AS `max_price`
-FROM `oil_prices`
-WHERE `price_date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-GROUP BY DATE_FORMAT(`price_date`, '%Y-%m'), `provider`
-ORDER BY `month` DESC, `provider`;
+    TO_CHAR(price_date, 'YYYY-MM') AS month,
+    provider,
+    AVG(price_per_100l) AS avg_price,
+    MIN(price_per_100l) AS min_price,
+    MAX(price_per_100l) AS max_price
+FROM oil_prices
+WHERE price_date >= CURRENT_DATE - INTERVAL '12 months'
+GROUP BY TO_CHAR(price_date, 'YYYY-MM'), provider
+ORDER BY month DESC, provider;
 ```
 
 ### Find Best Price Day of Week
 
 ```sql
 SELECT
-    DAYNAME(`price_date`) AS `day_of_week`,
-    AVG(`price_per_100l`) AS `avg_price`
-FROM `oil_prices`
-WHERE `provider` = 'heizoel24'
-    AND `price_date` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-GROUP BY DAYNAME(`price_date`), DAYOFWEEK(`price_date`)
-ORDER BY DAYOFWEEK(`price_date`);
+    TO_CHAR(price_date, 'Day') AS day_of_week,
+    AVG(price_per_100l) AS avg_price
+FROM oil_prices
+WHERE provider = 'heizoel24'
+    AND price_date >= CURRENT_DATE - INTERVAL '6 months'
+GROUP BY TO_CHAR(price_date, 'Day'), EXTRACT(DOW FROM price_date)
+ORDER BY EXTRACT(DOW FROM price_date);
 ```
 
 ### Compare Providers
 
 ```sql
 SELECT
-    `price_date`,
-    MAX(CASE WHEN `provider` = 'heizoel24' THEN `price_per_100l` END) AS `heizoel24`,
-    MAX(CASE WHEN `provider` = 'hoyer' THEN `price_per_100l` END) AS `hoyer`
-FROM `oil_prices`
-WHERE `price_date` >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    AND `product_type` = 'standard'
-GROUP BY `price_date`
-ORDER BY `price_date` DESC;
+    price_date,
+    MAX(CASE WHEN provider = 'heizoel24' THEN price_per_100l END) AS heizoel24,
+    MAX(CASE WHEN provider = 'hoyer' THEN price_per_100l END) AS hoyer
+FROM oil_prices
+WHERE price_date >= CURRENT_DATE - INTERVAL '30 days'
+    AND product_type = 'standard'
+GROUP BY price_date
+ORDER BY price_date DESC;
 ```

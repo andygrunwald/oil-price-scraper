@@ -1,4 +1,4 @@
-// Package database provides MySQL database operations for the oil price scraper.
+// Package database provides PostgreSQL database operations for the oil price scraper.
 package database
 
 import (
@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"
 
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
 )
 
-// DB wraps the MySQL database connection and provides operations for oil prices.
+// DB wraps the PostgreSQL database connection and provides operations for oil prices.
 type DB struct {
 	db     *sql.DB
 	logger zerolog.Logger
@@ -21,7 +21,7 @@ type DB struct {
 
 // New creates a new database connection.
 func New(dsn string, logger zerolog.Logger) (*DB, error) {
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("opening database connection: %w", err)
 	}
@@ -56,11 +56,12 @@ func (d *DB) Ping() error {
 func (d *DB) InsertPrice(ctx context.Context, price models.PriceResult, storeRawResponse bool) error {
 	query := `
 		INSERT INTO oil_prices (provider, product_type, price_date, price_per_100l, currency, scope, zip_code, raw_response, fetched_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON DUPLICATE KEY UPDATE
-			price_per_100l = VALUES(price_per_100l),
-			raw_response = VALUES(raw_response),
-			fetched_at = VALUES(fetched_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (provider, product_type, price_date, zip_code)
+		DO UPDATE SET
+			price_per_100l = EXCLUDED.price_per_100l,
+			raw_response = EXCLUDED.raw_response,
+			fetched_at = EXCLUDED.fetched_at
 	`
 
 	var rawResponse []byte
@@ -102,8 +103,8 @@ func (d *DB) InsertPrice(ctx context.Context, price models.PriceResult, storeRaw
 func (d *DB) ExistsForDate(ctx context.Context, provider, productType string, date time.Time, zipCode string) (bool, error) {
 	query := `
 		SELECT COUNT(*) FROM oil_prices
-		WHERE provider = ? AND product_type = ? AND price_date = ?
-		AND (zip_code = ? OR (zip_code IS NULL AND ? IS NULL))
+		WHERE provider = $1 AND product_type = $2 AND price_date = $3
+		AND (zip_code = $4 OR (zip_code IS NULL AND $4 IS NULL))
 	`
 
 	var zipCodePtr *string
@@ -116,7 +117,6 @@ func (d *DB) ExistsForDate(ctx context.Context, provider, productType string, da
 		provider,
 		productType,
 		date.Format("2006-01-02"),
-		zipCodePtr,
 		zipCodePtr,
 	).Scan(&count)
 	if err != nil {
