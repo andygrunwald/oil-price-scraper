@@ -29,6 +29,10 @@ func backfillCmd() *cobra.Command {
 				return fmt.Errorf("--postgres-dsn is required")
 			}
 
+			if cfg.ZipCode == "" {
+				return fmt.Errorf("--zip-code is required")
+			}
+
 			if fromStr == "" {
 				return fmt.Errorf("--from is required")
 			}

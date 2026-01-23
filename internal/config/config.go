@@ -54,7 +54,7 @@ func DefaultConfig() *Config {
 		LogFormat:        "json",
 		StoreRawResponse: true,
 		HTTPAddr:         ":8080",
-		ZipCode:          "47259",
+		ZipCode:          "",
 		OrderAmount:      3000,
 		ScrapeHour:       6,
 		Providers:        []string{"heizoel24", "hoyer"},

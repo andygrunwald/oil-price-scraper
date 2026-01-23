@@ -27,6 +27,10 @@ func scrapeCmd() *cobra.Command {
 				return fmt.Errorf("--postgres-dsn is required")
 			}
 
+			if cfg.ZipCode == "" {
+				return fmt.Errorf("--zip-code is required")
+			}
+
 			// Parse providers
 			providerList := strings.Split(providers, ",")
 			for i := range providerList {
