@@ -30,7 +30,7 @@ type apiResponse struct {
 
 // product represents a single product offering from Hoyer.
 type product struct {
-	ID               string   `json:"id"`
+	ID               int      `json:"id"`
 	Name             string   `json:"name"`
 	Description      []string `json:"description"`
 	BasePrice        float64  `json:"basePrice"`
@@ -43,16 +43,15 @@ type product struct {
 
 // prices contains pricing details.
 type prices struct {
-	Net    priceDetail `json:"net"`
-	Gross  priceDetail `json:"gross"`
-	Taxes  priceDetail `json:"taxes"`
-	Totals priceDetail `json:"totals"`
-}
-
-// priceDetail contains the price value and unit.
-type priceDetail struct {
-	Value float64 `json:"value"`
-	Unit  string  `json:"unit"`
+	PriceNet              string  `json:"priceNet"`
+	PriceGross            string  `json:"priceGross"`
+	Taxes                 string  `json:"taxes"`
+	PriceTotalNet         string  `json:"priceTotalNet"`
+	PriceTotalGross       string  `json:"priceTotalGross"`
+	TaxesTotal            string  `json:"taxesTotal"`
+	WithAction            *string `json:"withAction"`
+	TotalWithAction       *string `json:"totalWithAction"`
+	PriceActionDifference float64 `json:"priceActionDifference"`
 }
 
 // settings contains API settings (not currently used but part of response).
