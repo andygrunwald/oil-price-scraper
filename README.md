@@ -47,7 +47,7 @@ curl http://localhost:8080/status
 docker pull ghcr.io/andygrunwald/oil-price-scraper:latest
 
 docker run -d \
-  -e POSTGRES_DSN="postgres://user:password@host:5432/oilprices?sslmode=disable" \
+  -e POSTGRES_DSN="postgres://user:password@host:5432/oil?sslmode=disable" \
   -p 8080:8080 \
   ghcr.io/andygrunwald/oil-price-scraper:latest
 ```
@@ -81,7 +81,7 @@ Start the continuous scraper with daily scheduling:
 
 ```bash
 oilscraper run \
-  --postgres-dsn "postgres://user:password@localhost:5432/oilprices?sslmode=disable" \
+  --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
   --scrape-hour 6 \
   --providers heizoel24,hoyer
 ```
@@ -92,7 +92,7 @@ Run a one-time scrape:
 
 ```bash
 oilscraper scrape \
-  --postgres-dsn "postgres://user:password@localhost:5432/oilprices?sslmode=disable" \
+  --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
   --providers heizoel24,hoyer
 ```
 
@@ -102,7 +102,7 @@ Backfill historical data:
 
 ```bash
 oilscraper backfill \
-  --postgres-dsn "postgres://user:password@localhost:5432/oilprices?sslmode=disable" \
+  --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
   --provider heizoel24 \
   --from 2024-01-01 \
   --to 2024-12-31
@@ -250,7 +250,7 @@ docker-compose up -d postgres
 
 # Run the scraper locally
 go run ./cmd/oilscraper run \
-  --postgres-dsn "postgres://oilscraper:oilscraper@localhost:5432/oilprices?sslmode=disable" \
+  --postgres-dsn "postgres://oilscraper:oilscraper@localhost:5432/oil?sslmode=disable" \
   --log-format console \
   --log-level debug
 
@@ -276,10 +276,10 @@ docker-compose up --build
 docker-compose logs -f oilscraper
 
 # Access PostgreSQL
-docker exec -it oilscraper-postgres psql -U oilscraper -d oilprices
+docker exec -it oilscraper-postgres psql -U oilscraper -d oil
 
 # Query prices
-docker exec -it oilscraper-postgres psql -U oilscraper -d oilprices \
+docker exec -it oilscraper-postgres psql -U oilscraper -d oil \
   -c "SELECT * FROM oil_prices ORDER BY created_at DESC LIMIT 10;"
 ```
 
