@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:18.1
@@ -7,14 +5,14 @@ services:
     environment:
       POSTGRES_USER: oilscraper
       POSTGRES_PASSWORD: oilscraper
-      POSTGRES_DB: oilprices
+      POSTGRES_DB: oil
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oilscraper -d oilprices"]
+      test: ["CMD-SHELL", "pg_isready -U oilscraper -d oil"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +33,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      POSTGRES_DSN: "postgres://oilscraper:oilscraper@postgres:5432/oilprices?sslmode=disable"
+      POSTGRES_DSN: "postgres://oilscraper:oilscraper@postgres:5432/oil?sslmode=disable"
       LOG_LEVEL: debug
       LOG_FORMAT: console
       HTTP_ADDR: ":8080"
