@@ -76,7 +76,8 @@ func (p *Provider) PriceScope() models.PriceScope {
 // FetchCurrentPrices fetches today's price from HeizOel24.
 func (p *Provider) FetchCurrentPrices(ctx context.Context) ([]models.PriceResult, error) {
 	now := time.Now()
-	return p.FetchHistoricalPrices(ctx, now, now)
+	yesterday := now.Add(-24 * time.Hour)
+	return p.FetchHistoricalPrices(ctx, yesterday, now)
 }
 
 // FetchHistoricalPrices fetches prices for a date range from HeizOel24.
@@ -84,15 +85,15 @@ func (p *Provider) FetchHistoricalPrices(ctx context.Context, from, to time.Time
 	fromStr := from.Format("2006-01-02")
 	toStr := to.Format("2006-01-02")
 
-	url := fmt.Sprintf("%s?countryId=%d&minDate=%s&maxDate=%s", baseURL, countryID, fromStr, toStr)
+	apiURL := fmt.Sprintf("%s?countryId=%d&minDate=%s&maxDate=%s", baseURL, countryID, fromStr, toStr)
 
 	p.logger.Debug().
-		Str("url", url).
+		Str("url", apiURL).
 		Str("from", fromStr).
 		Str("to", toStr).
 		Msg("fetching prices from HeizOel24")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
