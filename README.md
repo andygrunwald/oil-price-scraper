@@ -82,6 +82,7 @@ Start the continuous scraper with daily scheduling:
 ```bash
 oilscraper run \
   --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
+  --zip-code "12345" \
   --scrape-hour 6 \
   --providers heizoel24,hoyer
 ```
@@ -93,6 +94,7 @@ Run a one-time scrape:
 ```bash
 oilscraper scrape \
   --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
+  --zip-code "12345" \
   --providers heizoel24,hoyer
 ```
 
@@ -251,6 +253,7 @@ docker-compose up -d postgres
 # Run the scraper locally
 go run ./cmd/oilscraper run \
   --postgres-dsn "postgres://oilscraper:oilscraper@localhost:5432/oil?sslmode=disable" \
+  --zip-code "12345" \
   --log-format console \
   --log-level debug
 
