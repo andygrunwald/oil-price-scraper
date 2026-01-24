@@ -27,7 +27,7 @@ builds:
       - -X main.BuildDate={{.Date}}
 
 archives:
-  - format: tar.gz
+  - formats: ['tar.gz']
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
@@ -52,40 +52,25 @@ changelog:
       - Merge pull request
       - Merge branch
 
-dockers:
-  - image_templates:
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
-    use: buildx
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--build-arg=VERSION={{.Version}}"
-      - "--build-arg=COMMIT={{.Commit}}"
-      - "--build-arg=BUILD_DATE={{.Date}}"
-  - image_templates:
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
-    use: buildx
-    dockerfile: Dockerfile
-    goarch: arm64
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--build-arg=VERSION={{.Version}}"
-      - "--build-arg=COMMIT={{.Commit}}"
-      - "--build-arg=BUILD_DATE={{.Date}}"
-
-docker_manifests:
-  - name_template: "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/andygrunwald/oil-price-scraper:{{ .Major }}.{{ .Minor }}"
-    image_templates:
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/andygrunwald/oil-price-scraper:latest"
-    image_templates:
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
-      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
+dockers_v2:
+  - images:
+      - "ghcr.io/andygrunwald/oil-price-scraper"
+    tags:
+      - "{{ .Version }}"
+      - "{{ .Major }}.{{ .Minor }}"
+      - "latest"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    build_args:
+      VERSION: "{{ .Version }}"
+      COMMIT: "{{ .Commit }}"
+      BUILD_DATE: "{{ .Date }}"
+    labels:
+      "org.opencontainers.image.title": "{{ .ProjectName }}"
+      "org.opencontainers.image.version": "{{ .Version }}"
+      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "org.opencontainers.image.source": "{{ .GitURL }}"
 
 release:
   github:
