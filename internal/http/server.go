@@ -30,7 +30,9 @@ func NewServer(addr string, s *scraper.Scraper, sched *scheduler.Scheduler, db *
 	mux.Handle("/status", NewStatusHandler(s, sched, db))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		if _, err := w.Write([]byte("OK")); err != nil {
+			panic(err)
+		}
 	})
 
 	return &Server{

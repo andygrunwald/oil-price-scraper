@@ -63,7 +63,11 @@ func backfillCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("connecting to database: %w", err)
 			}
-			defer db.Close()
+			defer func() {
+				if err := db.Close(); err != nil {
+					panic(err)
+				}
+			}()
 
 			// Create scraper
 			s := scraper.New(db, cfg.StoreRawResponse, logger)
