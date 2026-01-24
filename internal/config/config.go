@@ -52,7 +52,7 @@ func DefaultConfig() *Config {
 		PostgresDSN:      "",
 		LogLevel:         "info",
 		LogFormat:        "json",
-		StoreRawResponse: true,
+		StoreRawResponse: false,
 		HTTPAddr:         ":8080",
 		ZipCode:          "",
 		OrderAmount:      3000,
