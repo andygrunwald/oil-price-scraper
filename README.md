@@ -309,6 +309,19 @@ oil-price-scraper/
 └── README.md
 ```
 
+### Releasing a New Version
+
+1. Ensure all changes are committed and pushed to main
+2. Create and push a version tag:
+   ```bash
+   git tag -a v1.0.0 -m "Release v1.0.0"
+   git push origin v1.0.0
+   ```
+3. Goreleaser will automatically:
+   - Build binaries for Linux and macOS (amd64/arm64)
+   - Create a GitHub Release with changelog
+   - Push Docker images to ghcr.io
+
 ## Contributing
 
 1. Fork the repository

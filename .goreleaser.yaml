@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: oilscraper
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/oilscraper
+    binary: oilscraper
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+dockers:
+  - image_templates:
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
+    use: buildx
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--build-arg=VERSION={{.Version}}"
+      - "--build-arg=COMMIT={{.Commit}}"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+  - image_templates:
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
+    use: buildx
+    dockerfile: Dockerfile
+    goarch: arm64
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--build-arg=VERSION={{.Version}}"
+      - "--build-arg=COMMIT={{.Commit}}"
+      - "--build-arg=BUILD_DATE={{.Date}}"
+
+docker_manifests:
+  - name_template: "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/andygrunwald/oil-price-scraper:{{ .Major }}.{{ .Minor }}"
+    image_templates:
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/andygrunwald/oil-price-scraper:latest"
+    image_templates:
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-amd64"
+      - "ghcr.io/andygrunwald/oil-price-scraper:{{ .Version }}-arm64"
+
+release:
+  github:
+    owner: andygrunwald
+    name: oil-price-scraper
+  draft: false
+  prerelease: auto
+  mode: replace
+  name_template: "{{.Tag}}"
