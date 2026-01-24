@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -144,13 +145,22 @@ func (p *Provider) FetchCurrentPrices(ctx context.Context) ([]models.PriceResult
 	results := make([]models.PriceResult, 0, len(apiResp.Products))
 
 	for _, prod := range apiResp.Products {
+		// Parse the gross price (with taxes) from German format
+		pricePer100L, ok := parseGermanPrice(prod.Prices.PriceGross)
+		if !ok {
+			p.logger.Warn().
+				Str("productName", prod.Name).
+				Str("priceGross", prod.Prices.PriceGross).
+				Msg("failed to parse priceGross, skipping product")
+			continue
+		}
+
 		// Normalize product name to lowercase for consistent storage
 		productType := normalizeProductType(prod.Name)
 
-		// Use basePrice as the price per 100L
 		results = append(results, models.PriceResult{
 			Date:         today,
-			PricePer100L: prod.BasePrice,
+			PricePer100L: pricePer100L,
 			Currency:     "EUR",
 			Provider:     ProviderName,
 			ProductType:  productType,
@@ -184,4 +194,16 @@ func normalizeProductType(name string) string {
 	normalized = strings.ReplaceAll(normalized, "ü", "ue")
 	normalized = strings.ReplaceAll(normalized, "ß", "ss")
 	return normalized
+}
+
+// parseGermanPrice converts a German-formatted price string (e.g., "90,99") to float64.
+// Returns the parsed value and true on success, or 0 and false on failure.
+func parseGermanPrice(s string) (float64, bool) {
+	// Replace German decimal comma with dot
+	normalized := strings.ReplaceAll(s, ",", ".")
+	value, err := strconv.ParseFloat(normalized, 64)
+	if err != nil {
+		return 0, false
+	}
+	return value, true
 }
