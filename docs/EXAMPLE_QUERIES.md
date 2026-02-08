@@ -2,6 +2,14 @@
 
 This document contains useful SQL queries for analyzing oil price data stored in the `oil_prices` table (PostgreSQL).
 
+## Get all prices
+
+```sql
+SELECT provider, product_type, price_date, price_per_100l 
+FROM oil_prices 
+ORDER BY price_date DESC;
+```
+
 ## Count Prices by Provider
 
 Get the total number of price records for a specific provider. Useful for monitoring data collection and comparing provider coverage.
