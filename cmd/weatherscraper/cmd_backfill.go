@@ -9,6 +9,7 @@ import (
 
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/brightsky"
+	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/dwdcdc"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openmeteo"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openweather"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/visualcrossing"
@@ -102,6 +103,8 @@ func backfillCmd() *cobra.Command {
 					return fmt.Errorf("--openweather-api-key is required for OpenWeather provider")
 				}
 				s.RegisterProvider(openweather.New(logger, cfg.OpenWeatherAPIKey, minDelay, maxDelay))
+			case "dwdcdc":
+				s.RegisterProvider(dwdcdc.New(logger))
 			default:
 				return fmt.Errorf("unknown provider: %s", provider)
 			}
