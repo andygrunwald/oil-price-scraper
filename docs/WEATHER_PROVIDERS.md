@@ -13,6 +13,7 @@ All providers return daily weather observations that are stored in the `weather_
 - [Visual Crossing](#visual-crossing)
 - [OpenWeather One Call 3.0](#openweather-one-call-30)
 - [DWD CDC-OpenData](#dwd-cdc-opendata)
+- [General Limitations](#general-limitations)
 
 ---
 
@@ -133,6 +134,15 @@ The Open-Meteo API offers many more daily variables that are not currently scrap
 - Data updates with ~5 days delay for ERA5
 - The `timezone` parameter is set to `Europe/Berlin` to ensure correct day boundaries
 
+### Known Limitations
+
+- **Model data, not measurements**: ERA5 reanalysis data is produced by a weather model, not direct station observations. It may diverge from local ground truth, especially for precipitation and microclimate effects.
+- **~10km spatial resolution**: ERA5 grid cells are approximately 10×10 km. Fine-grained local variations (urban heat islands, valley effects) are smoothed out.
+- **~5-day data delay**: ERA5 archive data lags about 5 days behind real-time. The most recent days may not be available in the historical archive.
+- **Timezone hardcoded**: The `timezone` parameter is set to `Europe/Berlin`. Using this provider for locations in other timezones would produce incorrect day boundaries.
+- **Free tier fair-use limits**: While no API key is required, the free tier has fair-use limits (10,000 calls/day). No rate limiting or backoff is implemented in the scraper.
+- **No retry logic**: A single HTTP request is made. Network failures cause immediate failure with no automatic retry.
+
 ---
 
 ## Bright Sky (DWD)
@@ -186,6 +196,17 @@ The `/sources` endpoint also returns station metadata (DWD station ID, station n
 - The API returns the nearest DWD station's data for the given coordinates
 - Hourly data is aggregated to daily by the scraper — this means daily values may differ slightly from DWD's own daily aggregates due to different aggregation methods or timezone handling
 - For large backfill ranges, requests are chunked into 30-day windows to avoid timeouts
+
+### Known Limitations
+
+- **Hourly-to-daily aggregation**: The API returns hourly observations which the scraper aggregates to daily values (min, max, mean, sum). This may produce slightly different results than DWD's own official daily aggregates, especially around day boundaries and timezone transitions.
+- **Germany-only**: Only covers German territory (DWD station network). No international data.
+- **Data from 2010 only**: Historical data starts from January 2010. Older data is not available through Bright Sky.
+- **30-day request chunking**: Large backfill ranges are split into 30-day chunks to avoid API timeouts. This increases the number of HTTP requests for multi-year backfills.
+- **60-second HTTP timeout**: May be insufficient for very large date ranges within a single chunk.
+- **No retry logic**: A single HTTP request per chunk. Network failures cause immediate failure of that chunk.
+- **Wind direction dropped**: The API provides hourly wind direction, but it is not aggregated or stored (daily wind direction aggregation is ambiguous).
+- **Station selection opaque**: Bright Sky automatically selects the nearest DWD station. The user has no control over which station is used, and the selected station is not logged.
 
 ---
 
@@ -252,6 +273,16 @@ Parameters: `key={API_KEY}&include=days&unitGroup=metric&contentType=json`
 - The Timeline API can return forecast and historical data in a single unified endpoint
 - Free tier tracks records (1 day = 1 record), not API calls
 
+### Known Limitations
+
+- **API key required**: Requires free registration. The key is passed in the URL query string.
+- **No sunshine duration**: The Visual Crossing daily API does not provide sunshine duration data. This field will always be `NULL`.
+- **Cost-based rate limiting**: The free tier allows 1,000 records per day. Each day of data counts as one record. A backfill of 1,000 days consumes the entire daily quota. There is no rate limiting or quota tracking in the scraper.
+- **No backoff on rate limit errors**: If the daily quota is exceeded, the API returns an error but the scraper does not implement exponential backoff or pause-and-resume.
+- **No retry logic**: A single HTTP request per scrape. Network failures cause immediate failure.
+- **API key in URL**: The API key is passed as a query parameter, which may appear in server logs and monitoring tools.
+- **Commercial terms**: Subject to Visual Crossing's terms of service. The free tier may have restrictions on commercial use.
+
 ---
 
 ## OpenWeather One Call 3.0
@@ -306,6 +337,18 @@ Parameters: `lat={LAT}&lon={LON}&date={YYYY-MM-DD}&appid={API_KEY}&units=metric`
 - Wind speed is converted from m/s to km/h (×3.6) for consistency with other providers
 - Backfill operations use `--min-delay` and `--max-delay` flags for rate limiting (random sleep between requests)
 - A warning is logged if the backfill date range exceeds 900 days for rate-limited providers
+
+### Known Limitations
+
+- **One day per request**: The `day_summary` endpoint only returns data for a single day. Backfilling N days requires N separate HTTP requests. A 1-year backfill requires 365 API calls.
+- **API key required**: Requires registration and a One Call 3.0 subscription (free tier available).
+- **1,000 calls/day free limit**: The free tier allows 1,000 API calls per day. A multi-year backfill cannot be completed in a single day. The scraper logs a warning for ranges exceeding 900 days.
+- **Afternoon-only values**: Cloud cover, humidity, and pressure are snapshot values from the afternoon, not true daily averages. These may differ significantly from providers that report daily means.
+- **No sunshine duration**: The day_summary endpoint does not provide sunshine duration data. This field will always be `NULL`.
+- **No wind gust data**: The endpoint does not provide separate wind gust speed. Only maximum wind speed is available.
+- **Calculated mean temperature**: The API does not provide a true daily mean temperature. It is calculated as `(min + max) / 2`, which can differ from the standard meteorological daily mean (typically based on multiple readings throughout the day).
+- **Rate limiting via sleep**: Backfill uses random sleep delays between requests (`--min-delay` / `--max-delay`). This is simple but not adaptive — it cannot detect or respond to 429 rate limit responses.
+- **No retry on individual day failures**: If fetching a single day fails during backfill, the day is skipped with an error log. It is not retried.
 
 ---
 
@@ -383,3 +426,47 @@ The data file (`produkt_klima_tag_*.txt`) contains 19 semicolon-delimited column
 - For backfill, both historical and recent ZIPs are downloaded and merged, with duplicates removed (preferring later entries)
 - The station list file and data files use Latin-1 encoding
 - Germany-only coverage (~560 active stations)
+
+### Known Limitations
+
+- **Germany-only**: Only covers German territory (~560 active weather stations). No international data.
+- **Station-based, not coordinate-based**: Data comes from the nearest DWD station, which may be several kilometers from the requested coordinates. Rural areas with sparse station coverage may have less representative data.
+- **~1 day data lag**: The most recent data available is typically from yesterday. `FetchCurrentWeather` returns the most recent available day, not today.
+- **Two data quality tiers**: The `recent/` data (last ~500 days) has not yet passed final quality control. The `historical/` data is quality-controlled but only updated annually. Recent data values may be revised when they move to the historical archive.
+- **ZIP file downloads**: Unlike REST/JSON APIs, this provider downloads entire ZIP archives. Each scrape downloads the full recent ZIP (~5–50 KB) even if only one day is needed.
+- **Latin-1 encoding**: Data files use Latin-1 encoding, not UTF-8. Station names with umlauts (e.g., "Würzburg") require special handling.
+- **Historical ZIP URL construction**: The historical ZIP filename includes the station's date range, which is derived from the station list. If the station list data is stale or the date range has changed, the download may fail.
+- **No retry logic**: ZIP downloads are single-attempt. Network failures cause immediate failure.
+- **Missing value encoding**: DWD uses `-999` to indicate missing data. Any value ≤ -999 is treated as missing. In rare cases, this could theoretically mask extreme negative values (though none of the measured parameters reach -999 in practice).
+- **Station selection is fixed**: The nearest station is cached after the first lookup. If a closer station becomes available (e.g., a new station is commissioned), the scraper will continue using the originally selected station until restarted.
+- **Snow depth, vapor pressure, ground temperature dropped**: These DWD measurements are available in the data file but not stored in the database schema.
+
+---
+
+## General Limitations
+
+These limitations apply to the weather scraper system as a whole, regardless of provider:
+
+### No Retry Logic
+All providers make a single HTTP request per scrape attempt. If the request fails (network error, timeout, HTTP error), the failure is logged but not retried. The next scrape attempt occurs at the next scheduled time (default: daily at 07:00).
+
+### Sequential Provider Execution
+Providers are scraped one after another, not in parallel. If one provider is slow or fails, it delays scraping of subsequent providers.
+
+### No Circuit Breaker
+There is no circuit breaker pattern. If a provider API is consistently failing, the scraper will continue attempting requests at every scheduled interval without any backoff.
+
+### No Request Caching
+Each scrape makes fresh HTTP requests. There is no caching layer to reduce API load or provide fallback data during outages.
+
+### No Data Validation
+Weather values returned by APIs are stored as-is without sanity checks. There is no validation for physically reasonable ranges (e.g., detecting a temperature of 100°C due to an API error).
+
+### Coordinate Rounding
+All coordinates are rounded to 4 decimal places (~11m precision) before storage and uniqueness checks. This prevents near-duplicate entries but means that two very close but distinct locations would be treated as the same point.
+
+### Raw Response Storage
+Raw API responses are only stored if `--store-raw-response` is enabled (default: `false`). Without this, there is no way to audit or re-parse historical API responses. Note that for DWD CDC, the "raw response" is the extracted text file contents, not the ZIP archive.
+
+### Single Location
+The weather scraper is configured with a single latitude/longitude pair. Scraping weather for multiple locations requires running multiple instances of the scraper with different configurations.
