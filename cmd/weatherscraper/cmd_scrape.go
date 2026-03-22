@@ -9,6 +9,7 @@ import (
 
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/brightsky"
+	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/dwdcdc"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openmeteo"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openweather"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/visualcrossing"
@@ -88,6 +89,8 @@ func scrapeCmd() *cobra.Command {
 						continue
 					}
 					s.RegisterProvider(openweather.New(logger, cfg.OpenWeatherAPIKey, 1, 5))
+				case "dwdcdc":
+					s.RegisterProvider(dwdcdc.New(logger))
 				default:
 					logger.Warn().Str("provider", p).Msg("unknown provider, skipping")
 				}
