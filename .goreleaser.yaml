@@ -10,8 +10,25 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd/oilscraper
+  - id: oilscraper
+    main: ./cmd/oilscraper
     binary: oilscraper
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.Date}}
+  - id: weatherscraper
+    main: ./cmd/weatherscraper
+    binary: weatherscraper
     env:
       - CGO_ENABLED=0
     goos:
@@ -55,6 +72,8 @@ changelog:
 dockers_v2:
   - images:
       - "ghcr.io/andygrunwald/oil-price-scraper"
+    ids:
+      - oilscraper
     tags:
       - "{{ .Version }}"
       - "{{ .Major }}.{{ .Minor }}"
@@ -67,7 +86,28 @@ dockers_v2:
       COMMIT: "{{ .Commit }}"
       BUILD_DATE: "{{ .Date }}"
     labels:
-      "org.opencontainers.image.title": "{{ .ProjectName }}"
+      "org.opencontainers.image.title": "oil-price-scraper"
+      "org.opencontainers.image.version": "{{ .Version }}"
+      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "org.opencontainers.image.source": "{{ .GitURL }}"
+  - images:
+      - "ghcr.io/andygrunwald/weather-scraper"
+    ids:
+      - weatherscraper
+    dockerfile: Dockerfile.weather
+    tags:
+      - "{{ .Version }}"
+      - "{{ .Major }}.{{ .Minor }}"
+      - "latest"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    build_args:
+      VERSION: "{{ .Version }}"
+      COMMIT: "{{ .Commit }}"
+      BUILD_DATE: "{{ .Date }}"
+    labels:
+      "org.opencontainers.image.title": "weather-scraper"
       "org.opencontainers.image.version": "{{ .Version }}"
       "org.opencontainers.image.revision": "{{ .FullCommit }}"
       "org.opencontainers.image.source": "{{ .GitURL }}"

@@ -1,4 +1,4 @@
-// Package scheduler provides a daily scheduler for oil price scraping.
+// Package scheduler provides a daily scheduler for scraping.
 package scheduler
 
 import (
@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-
-	"github.com/andygrunwald/oil-price-scraper/internal/scraper"
 )
 
 // Scheduler manages the daily scraping schedule.
 type Scheduler struct {
-	scraper    *scraper.Scraper
+	scraper    ScraperInterface
 	scrapeHour int
 	logger     zerolog.Logger
 
@@ -24,7 +22,7 @@ type Scheduler struct {
 }
 
 // New creates a new Scheduler.
-func New(s *scraper.Scraper, scrapeHour int, logger zerolog.Logger) *Scheduler {
+func New(s ScraperInterface, scrapeHour int, logger zerolog.Logger) *Scheduler {
 	return &Scheduler{
 		scraper:    s,
 		scrapeHour: scrapeHour,
@@ -104,32 +102,32 @@ func (s *Scheduler) calculateNextScrapeTime() time.Time {
 
 // runIfNeeded checks if scraping is needed and runs it.
 func (s *Scheduler) runIfNeeded(ctx context.Context) {
-	providers := s.scraper.GetProviders()
+	providerNames := s.scraper.GetProviderNames()
 
-	for _, provider := range providers {
-		hasScraped, err := s.scraper.HasScrapedToday(ctx, provider.Name())
+	for _, name := range providerNames {
+		hasScraped, err := s.scraper.HasScrapedToday(ctx, name)
 		if err != nil {
 			s.logger.Error().
 				Err(err).
-				Str("provider", provider.Name()).
+				Str("provider", name).
 				Msg("failed to check if scraped today")
 			continue
 		}
 
 		if !hasScraped {
 			s.logger.Info().
-				Str("provider", provider.Name()).
+				Str("provider", name).
 				Msg("no scrape for today, running initial scrape")
 
-			if err := s.scraper.ScrapeProvider(ctx, provider.Name()); err != nil {
+			if err := s.scraper.ScrapeProvider(ctx, name); err != nil {
 				s.logger.Error().
 					Err(err).
-					Str("provider", provider.Name()).
+					Str("provider", name).
 					Msg("initial scrape failed")
 			}
 		} else {
 			s.logger.Info().
-				Str("provider", provider.Name()).
+				Str("provider", name).
 				Msg("already scraped today, skipping initial scrape")
 		}
 	}

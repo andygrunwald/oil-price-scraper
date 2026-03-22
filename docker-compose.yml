@@ -45,6 +45,32 @@ services:
       - oilscraper
     restart: unless-stopped
 
+  weatherscraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.weather
+      args:
+        VERSION: dev
+        COMMIT: local
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    container_name: weatherscraper-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DSN: "postgres://oilscraper:oilscraper@postgres:5432/oil?sslmode=disable"
+      LOG_LEVEL: debug
+      LOG_FORMAT: console
+      HTTP_ADDR: ":8081"
+      LATITUDE: "51.4556"
+      LONGITUDE: "6.7623"
+      PROVIDERS: "openmeteo"
+    ports:
+      - "8081:8081"
+    networks:
+      - oilscraper
+    restart: unless-stopped
+
 volumes:
   postgres_data:
 
