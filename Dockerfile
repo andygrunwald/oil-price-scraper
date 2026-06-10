@@ -1,5 +1,5 @@
 # Runtime image - using alpine for CA certificates
-FROM alpine:3.23
+FROM alpine:3.24
 
 # Install CA certificates for HTTPS requests
 RUN apk add --no-cache ca-certificates
