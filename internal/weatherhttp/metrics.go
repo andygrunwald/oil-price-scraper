@@ -8,11 +8,11 @@ import (
 
 // Metrics holds all Prometheus metrics for the weather scraper.
 type Metrics struct {
-	APIRequestsTotal       *prometheus.CounterVec
-	APIRequestDuration     *prometheus.HistogramVec
+	APIRequestsTotal        *prometheus.CounterVec
+	APIRequestDuration      *prometheus.HistogramVec
 	LastScrapeTimestamp     *prometheus.GaugeVec
-	CurrentTemperature     *prometheus.GaugeVec
-	DBOperationsTotal      *prometheus.CounterVec
+	CurrentTemperature      *prometheus.GaugeVec
+	DBOperationsTotal       *prometheus.CounterVec
 	ObservationsStoredTotal *prometheus.GaugeVec
 }
 

@@ -26,25 +26,25 @@ const (
 
 // apiResponse represents the Open-Meteo API response.
 type apiResponse struct {
-	Latitude  float64    `json:"latitude"`
-	Longitude float64    `json:"longitude"`
-	Timezone  string     `json:"timezone"`
-	Daily     dailyData  `json:"daily"`
+	Latitude   float64    `json:"latitude"`
+	Longitude  float64    `json:"longitude"`
+	Timezone   string     `json:"timezone"`
+	Daily      dailyData  `json:"daily"`
 	DailyUnits dailyUnits `json:"daily_units"`
 }
 
 type dailyData struct {
-	Time                  []string   `json:"time"`
-	TemperatureMax        []*float64 `json:"temperature_2m_max"`
-	TemperatureMin        []*float64 `json:"temperature_2m_min"`
-	TemperatureMean       []*float64 `json:"temperature_2m_mean"`
-	PrecipitationSum      []*float64 `json:"precipitation_sum"`
-	WindSpeedMax          []*float64 `json:"wind_speed_10m_max"`
-	WindGustMax           []*float64 `json:"wind_gusts_10m_max"`
-	SunshineDuration      []*float64 `json:"sunshine_duration"`
-	CloudCoverMean        []*float64 `json:"cloud_cover_mean"`
-	RelativeHumidityMean  []*float64 `json:"relative_humidity_2m_mean"`
-	SurfacePressureMean   []*float64 `json:"surface_pressure_mean"`
+	Time                 []string   `json:"time"`
+	TemperatureMax       []*float64 `json:"temperature_2m_max"`
+	TemperatureMin       []*float64 `json:"temperature_2m_min"`
+	TemperatureMean      []*float64 `json:"temperature_2m_mean"`
+	PrecipitationSum     []*float64 `json:"precipitation_sum"`
+	WindSpeedMax         []*float64 `json:"wind_speed_10m_max"`
+	WindGustMax          []*float64 `json:"wind_gusts_10m_max"`
+	SunshineDuration     []*float64 `json:"sunshine_duration"`
+	CloudCoverMean       []*float64 `json:"cloud_cover_mean"`
+	RelativeHumidityMean []*float64 `json:"relative_humidity_2m_mean"`
+	SurfacePressureMean  []*float64 `json:"surface_pressure_mean"`
 }
 
 type dailyUnits struct {

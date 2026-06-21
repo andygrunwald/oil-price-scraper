@@ -61,33 +61,33 @@ func TestParseStationList(t *testing.T) {
 
 func TestHaversineDistance(t *testing.T) {
 	tests := []struct {
-		name     string
-		lat1     float64
-		lon1     float64
-		lat2     float64
-		lon2     float64
-		wantKm   float64
+		name      string
+		lat1      float64
+		lon1      float64
+		lat2      float64
+		lon2      float64
+		wantKm    float64
 		tolerance float64
 	}{
 		{
-			name:     "same point",
-			lat1:     51.4556, lon1: 6.7623,
-			lat2:     51.4556, lon2: 6.7623,
-			wantKm:   0,
+			name: "same point",
+			lat1: 51.4556, lon1: 6.7623,
+			lat2: 51.4556, lon2: 6.7623,
+			wantKm:    0,
 			tolerance: 0.01,
 		},
 		{
-			name:     "Berlin to Munich",
-			lat1:     52.5200, lon1: 13.4050,
-			lat2:     48.1351, lon2: 11.5820,
-			wantKm:   504,
+			name: "Berlin to Munich",
+			lat1: 52.5200, lon1: 13.4050,
+			lat2: 48.1351, lon2: 11.5820,
+			wantKm:    504,
 			tolerance: 10,
 		},
 		{
-			name:     "Duisburg to Aachen",
-			lat1:     51.4556, lon1: 6.7623,
-			lat2:     50.7827, lon2: 6.0941,
-			wantKm:   85,
+			name: "Duisburg to Aachen",
+			lat1: 51.4556, lon1: 6.7623,
+			lat2: 50.7827, lon2: 6.0941,
+			wantKm:    85,
 			tolerance: 10,
 		},
 	}

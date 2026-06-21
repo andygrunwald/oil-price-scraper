@@ -184,12 +184,12 @@ func filterByDateRange(records []dailyRecord, from, to time.Time) []dailyRecord 
 // recordToWeatherResult converts a DWD daily record to a WeatherResult with unit conversions.
 func recordToWeatherResult(rec dailyRecord, lat, lon float64, rawBody []byte) models.WeatherResult {
 	result := models.WeatherResult{
-		Date:      rec.Date,
-		Provider:  providerName,
-		Latitude:  models.RoundCoord(lat),
-		Longitude: models.RoundCoord(lon),
+		Date:        rec.Date,
+		Provider:    providerName,
+		Latitude:    models.RoundCoord(lat),
+		Longitude:   models.RoundCoord(lon),
 		RawResponse: rawBody,
-		FetchedAt: time.Now(),
+		FetchedAt:   time.Now(),
 	}
 
 	result.TemperatureMinC = rec.TNK

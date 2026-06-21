@@ -109,10 +109,10 @@ func TestUnitConversions(t *testing.T) {
 	rec := dailyRecord{
 		StationID: "02110",
 		Date:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		FM:        float64Ptr(10.0),  // 10 m/s
-		FX:        float64Ptr(20.0),  // 20 m/s
-		SDK:       float64Ptr(5.0),   // 5 hours
-		NM:        float64Ptr(4.0),   // 4 okta
+		FM:        float64Ptr(10.0), // 10 m/s
+		FX:        float64Ptr(20.0), // 20 m/s
+		SDK:       float64Ptr(5.0),  // 5 hours
+		NM:        float64Ptr(4.0),  // 4 okta
 		TMK:       float64Ptr(5.0),
 		TXK:       float64Ptr(10.0),
 		TNK:       float64Ptr(0.0),

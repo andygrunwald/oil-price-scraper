@@ -46,12 +46,12 @@ type weatherRecord struct {
 }
 
 type source struct {
-	ID            int     `json:"id"`
-	DWDStationID  string  `json:"dwd_station_id"`
-	StationName   string  `json:"station_name"`
-	Latitude      float64 `json:"lat"`
-	Longitude     float64 `json:"lon"`
-	Height        float64 `json:"height"`
+	ID           int     `json:"id"`
+	DWDStationID string  `json:"dwd_station_id"`
+	StationName  string  `json:"station_name"`
+	Latitude     float64 `json:"lat"`
+	Longitude    float64 `json:"lon"`
+	Height       float64 `json:"height"`
 }
 
 // Provider implements the weatherapi.Provider interface for Bright Sky.
@@ -166,14 +166,14 @@ func (p *Provider) fetchAndAggregate(ctx context.Context, lat, lon float64, date
 func (p *Provider) aggregateHourlyToDaily(records []weatherRecord, lat, lon float64, rawBody []byte) ([]models.WeatherResult, error) {
 	// Group records by date
 	type dayBucket struct {
-		temps     []float64
-		precips   []float64
-		winds     []float64
-		gusts     []float64
-		sunshine  []float64
-		clouds    []float64
-		humidity  []float64
-		pressure  []float64
+		temps    []float64
+		precips  []float64
+		winds    []float64
+		gusts    []float64
+		sunshine []float64
+		clouds   []float64
+		humidity []float64
+		pressure []float64
 	}
 
 	buckets := make(map[string]*dayBucket)
