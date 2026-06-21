@@ -18,23 +18,23 @@ import (
 )
 
 const (
-	providerName = "openweather"
+	providerName  = "openweather"
 	daySummaryURL = "https://api.openweathermap.org/data/3.0/onecall/day_summary"
 )
 
 // daySummaryResponse represents the OpenWeather day_summary API response.
 type daySummaryResponse struct {
-	Lat          float64     `json:"lat"`
-	Lon          float64     `json:"lon"`
-	TZ           string      `json:"tz"`
-	Date         string      `json:"date"`
-	Units        string      `json:"units"`
-	CloudCover   cloudCover  `json:"cloud_cover"`
-	Humidity     humidity    `json:"humidity"`
+	Lat           float64       `json:"lat"`
+	Lon           float64       `json:"lon"`
+	TZ            string        `json:"tz"`
+	Date          string        `json:"date"`
+	Units         string        `json:"units"`
+	CloudCover    cloudCover    `json:"cloud_cover"`
+	Humidity      humidity      `json:"humidity"`
 	Precipitation precipitation `json:"precipitation"`
-	Temperature  temperature `json:"temperature"`
-	Pressure     pressure    `json:"pressure"`
-	Wind         wind        `json:"wind"`
+	Temperature   temperature   `json:"temperature"`
+	Pressure      pressure      `json:"pressure"`
+	Wind          wind          `json:"wind"`
 }
 
 type cloudCover struct {

@@ -31,23 +31,23 @@ type apiResponse struct {
 }
 
 type dayData struct {
-	DateTime     string   `json:"datetime"`
-	TempMax      *float64 `json:"tempmax"`
-	TempMin      *float64 `json:"tempmin"`
-	Temp         *float64 `json:"temp"`
-	FeelsLike    *float64 `json:"feelslike"`
-	Humidity     *float64 `json:"humidity"`
-	Precip       *float64 `json:"precip"`
-	WindSpeed    *float64 `json:"windspeed"`
-	WindGust     *float64 `json:"windgust"`
-	WindDir      *float64 `json:"winddir"`
-	CloudCover   *float64 `json:"cloudcover"`
-	Pressure     *float64 `json:"pressure"`
-	UVIndex      *float64 `json:"uvindex"`
-	Sunrise      string   `json:"sunrise"`
-	Sunset       string   `json:"sunset"`
-	Conditions   string   `json:"conditions"`
-	Description  string   `json:"description"`
+	DateTime    string   `json:"datetime"`
+	TempMax     *float64 `json:"tempmax"`
+	TempMin     *float64 `json:"tempmin"`
+	Temp        *float64 `json:"temp"`
+	FeelsLike   *float64 `json:"feelslike"`
+	Humidity    *float64 `json:"humidity"`
+	Precip      *float64 `json:"precip"`
+	WindSpeed   *float64 `json:"windspeed"`
+	WindGust    *float64 `json:"windgust"`
+	WindDir     *float64 `json:"winddir"`
+	CloudCover  *float64 `json:"cloudcover"`
+	Pressure    *float64 `json:"pressure"`
+	UVIndex     *float64 `json:"uvindex"`
+	Sunrise     string   `json:"sunrise"`
+	Sunset      string   `json:"sunset"`
+	Conditions  string   `json:"conditions"`
+	Description string   `json:"description"`
 }
 
 // Provider implements the weatherapi.Provider interface for Visual Crossing.
