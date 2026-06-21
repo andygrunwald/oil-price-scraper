@@ -1,5 +1,5 @@
-// Package scraper provides orchestration for scraping oil prices from multiple providers.
-package scraper
+// Package weatherscraper provides orchestration for scraping weather data from multiple providers.
+package weatherscraper
 
 import (
 	"context"
@@ -8,18 +8,18 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/andygrunwald/oil-price-scraper/internal/api"
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
+	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi"
 )
 
 // PrometheusMetrics defines the interface for recording Prometheus metrics.
 type PrometheusMetrics interface {
 	RecordAPIRequest(provider, status string, duration float64)
 	RecordLastScrape(provider string, timestamp float64)
-	RecordCurrentPrice(provider, scope, productType string, price float64)
+	RecordCurrentTemperature(provider string, temp float64)
 	RecordDBOperation(operation, status string)
-	RecordPricesStored(provider string, count float64)
+	RecordObservationsStored(provider string, count float64)
 }
 
 // Metrics holds scraping metrics for a provider.
@@ -30,7 +30,7 @@ type Metrics struct {
 	LastScrapeAt      *time.Time
 	LastScrapeSuccess bool
 	LastResponseTime  time.Duration
-	LastPrice         *float64
+	LastTemperature   *float64
 	LastError         *string
 	LastRawResponse   string
 }
@@ -45,7 +45,7 @@ func (m *Metrics) GetSnapshot() MetricsSnapshot {
 		LastScrapeAt:      m.LastScrapeAt,
 		LastScrapeSuccess: m.LastScrapeSuccess,
 		LastResponseTime:  m.LastResponseTime,
-		LastPrice:         m.LastPrice,
+		LastTemperature:   m.LastTemperature,
 		LastError:         m.LastError,
 		LastRawResponse:   m.LastRawResponse,
 	}
@@ -58,35 +58,39 @@ type MetricsSnapshot struct {
 	LastScrapeAt      *time.Time
 	LastScrapeSuccess bool
 	LastResponseTime  time.Duration
-	LastPrice         *float64
+	LastTemperature   *float64
 	LastError         *string
 	LastRawResponse   string
 }
 
-// Scraper orchestrates scraping from multiple providers.
-type Scraper struct {
+// WeatherScraper orchestrates scraping from multiple weather providers.
+type WeatherScraper struct {
 	db               *database.DB
-	providers        map[string]api.Provider
+	providers        map[string]weatherapi.Provider
 	providerMetrics  map[string]*Metrics
 	promMetrics      PrometheusMetrics
 	storeRawResponse bool
+	latitude         float64
+	longitude        float64
 	logger           zerolog.Logger
 	mu               sync.RWMutex
 }
 
-// New creates a new Scraper.
-func New(db *database.DB, storeRawResponse bool, logger zerolog.Logger) *Scraper {
-	return &Scraper{
+// New creates a new WeatherScraper.
+func New(db *database.DB, storeRawResponse bool, latitude, longitude float64, logger zerolog.Logger) *WeatherScraper {
+	return &WeatherScraper{
 		db:               db,
-		providers:        make(map[string]api.Provider),
+		providers:        make(map[string]weatherapi.Provider),
 		providerMetrics:  make(map[string]*Metrics),
 		storeRawResponse: storeRawResponse,
-		logger:           logger.With().Str("component", "scraper").Logger(),
+		latitude:         models.RoundCoord(latitude),
+		longitude:        models.RoundCoord(longitude),
+		logger:           logger.With().Str("component", "weatherscraper").Logger(),
 	}
 }
 
 // RegisterProvider registers a provider with the scraper.
-func (s *Scraper) RegisterProvider(provider api.Provider) {
+func (s *WeatherScraper) RegisterProvider(provider weatherapi.Provider) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.providers[provider.Name()] = provider
@@ -94,10 +98,10 @@ func (s *Scraper) RegisterProvider(provider api.Provider) {
 }
 
 // GetProviders returns all registered providers.
-func (s *Scraper) GetProviders() []api.Provider {
+func (s *WeatherScraper) GetProviders() []weatherapi.Provider {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	providers := make([]api.Provider, 0, len(s.providers))
+	providers := make([]weatherapi.Provider, 0, len(s.providers))
 	for _, p := range s.providers {
 		providers = append(providers, p)
 	}
@@ -105,7 +109,7 @@ func (s *Scraper) GetProviders() []api.Provider {
 }
 
 // GetProviderNames returns the names of all registered providers.
-func (s *Scraper) GetProviderNames() []string {
+func (s *WeatherScraper) GetProviderNames() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	names := make([]string, 0, len(s.providers))
@@ -116,21 +120,21 @@ func (s *Scraper) GetProviderNames() []string {
 }
 
 // GetMetrics returns the metrics for a provider.
-func (s *Scraper) GetMetrics(providerName string) *Metrics {
+func (s *WeatherScraper) GetMetrics(providerName string) *Metrics {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.providerMetrics[providerName]
 }
 
 // SetPrometheusMetrics sets the Prometheus metrics recorder.
-func (s *Scraper) SetPrometheusMetrics(m PrometheusMetrics) {
+func (s *WeatherScraper) SetPrometheusMetrics(m PrometheusMetrics) {
 	s.promMetrics = m
 }
 
-// ScrapeAll scrapes current prices from all registered providers.
-func (s *Scraper) ScrapeAll(ctx context.Context) error {
+// ScrapeAll scrapes current weather from all registered providers.
+func (s *WeatherScraper) ScrapeAll(ctx context.Context) error {
 	s.mu.RLock()
-	providers := make([]api.Provider, 0, len(s.providers))
+	providers := make([]weatherapi.Provider, 0, len(s.providers))
 	for _, p := range s.providers {
 		providers = append(providers, p)
 	}
@@ -148,8 +152,8 @@ func (s *Scraper) ScrapeAll(ctx context.Context) error {
 	return nil
 }
 
-// ScrapeProvider scrapes current prices from a specific provider.
-func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error {
+// ScrapeProvider scrapes current weather from a specific provider.
+func (s *WeatherScraper) ScrapeProvider(ctx context.Context, providerName string) error {
 	s.mu.RLock()
 	provider, ok := s.providers[providerName]
 	metrics := s.providerMetrics[providerName]
@@ -167,7 +171,7 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 	metrics.TotalRequests++
 	metrics.mu.Unlock()
 
-	prices, err := provider.FetchCurrentPrices(ctx)
+	observations, err := provider.FetchCurrentWeather(ctx, s.latitude, s.longitude)
 	duration := time.Since(start)
 
 	now := time.Now()
@@ -182,11 +186,10 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 	} else {
 		metrics.LastScrapeSuccess = true
 		metrics.LastError = nil
-		if len(prices) > 0 {
-			metrics.LastPrice = &prices[0].PricePer100L
-			if len(prices[0].RawResponse) > 0 {
-				// Store a truncated version for status endpoint
-				rawResp := string(prices[0].RawResponse)
+		if len(observations) > 0 && observations[0].TemperatureMeanC != nil {
+			metrics.LastTemperature = observations[0].TemperatureMeanC
+			if len(observations[0].RawResponse) > 0 {
+				rawResp := string(observations[0].RawResponse)
 				if len(rawResp) > 10000 {
 					rawResp = rawResp[:10000] + "..."
 				}
@@ -210,7 +213,7 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 			Err(err).
 			Str("provider", providerName).
 			Dur("duration", duration).
-			Msg("failed to fetch prices")
+			Msg("failed to fetch weather")
 		return err
 	}
 
@@ -221,21 +224,20 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 
 	s.logger.Info().
 		Str("provider", providerName).
-		Int("count", len(prices)).
+		Int("count", len(observations)).
 		Dur("duration", duration).
-		Msg("fetched prices")
+		Msg("fetched weather observations")
 
-	// Store prices in database
+	// Store observations in database
 	var storedCount float64
-	for _, price := range prices {
+	for _, obs := range observations {
 		// Check if already exists
-		exists, err := s.db.ExistsForDate(ctx, price.Provider, price.ProductType, price.Date, price.ZipCode)
+		exists, err := s.db.WeatherExistsForDate(ctx, obs.Provider, obs.Date, s.latitude, s.longitude)
 		if err != nil {
 			s.logger.Error().
 				Err(err).
-				Str("provider", price.Provider).
-				Str("product_type", price.ProductType).
-				Str("date", price.Date.Format("2006-01-02")).
+				Str("provider", obs.Provider).
+				Str("date", obs.Date.Format("2006-01-02")).
 				Msg("failed to check existence")
 			if s.promMetrics != nil {
 				s.promMetrics.RecordDBOperation("select", "error")
@@ -248,20 +250,18 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 
 		if exists {
 			s.logger.Debug().
-				Str("provider", price.Provider).
-				Str("product_type", price.ProductType).
-				Str("date", price.Date.Format("2006-01-02")).
-				Msg("price already exists, skipping")
+				Str("provider", obs.Provider).
+				Str("date", obs.Date.Format("2006-01-02")).
+				Msg("observation already exists, skipping")
 			continue
 		}
 
-		if err := s.db.InsertPrice(ctx, price, s.storeRawResponse); err != nil {
+		if err := s.db.InsertWeatherObservation(ctx, obs, s.storeRawResponse); err != nil {
 			s.logger.Error().
 				Err(err).
-				Str("provider", price.Provider).
-				Str("product_type", price.ProductType).
-				Str("date", price.Date.Format("2006-01-02")).
-				Msg("failed to insert price")
+				Str("provider", obs.Provider).
+				Str("date", obs.Date.Format("2006-01-02")).
+				Msg("failed to insert observation")
 			if s.promMetrics != nil {
 				s.promMetrics.RecordDBOperation("insert", "error")
 			}
@@ -269,21 +269,23 @@ func (s *Scraper) ScrapeProvider(ctx context.Context, providerName string) error
 			storedCount++
 			if s.promMetrics != nil {
 				s.promMetrics.RecordDBOperation("insert", "success")
-				s.promMetrics.RecordCurrentPrice(price.Provider, string(price.Scope), price.ProductType, price.PricePer100L)
+				if obs.TemperatureMeanC != nil {
+					s.promMetrics.RecordCurrentTemperature(obs.Provider, *obs.TemperatureMeanC)
+				}
 			}
 		}
 	}
 
-	// Record total prices stored for this provider
+	// Record total observations stored for this provider
 	if s.promMetrics != nil && storedCount > 0 {
-		s.promMetrics.RecordPricesStored(providerName, storedCount)
+		s.promMetrics.RecordObservationsStored(providerName, storedCount)
 	}
 
 	return nil
 }
 
-// Backfill backfills historical data from a provider.
-func (s *Scraper) Backfill(ctx context.Context, providerName string, from, to time.Time, minDelay, maxDelay int) error {
+// Backfill backfills historical weather data from a provider.
+func (s *WeatherScraper) Backfill(ctx context.Context, providerName string, from, to time.Time, minDelay, maxDelay int) error {
 	s.mu.RLock()
 	provider, ok := s.providers[providerName]
 	s.mu.RUnlock()
@@ -300,34 +302,42 @@ func (s *Scraper) Backfill(ctx context.Context, providerName string, from, to ti
 		return nil
 	}
 
+	// Warn if backfill range is large for providers with rate limits
+	days := int(to.Sub(from).Hours() / 24)
+	if days > 900 && provider.RequiresAPIKey() {
+		s.logger.Warn().
+			Str("provider", providerName).
+			Int("days", days).
+			Msg("large backfill range for rate-limited provider, may exceed daily API quota")
+	}
+
 	s.logger.Info().
 		Str("provider", providerName).
 		Str("from", from.Format("2006-01-02")).
 		Str("to", to.Format("2006-01-02")).
+		Int("days", days).
 		Msg("starting backfill")
 
-	// Fetch all historical prices at once (HeizOel24 supports date range queries)
-	prices, err := provider.FetchHistoricalPrices(ctx, from, to)
+	observations, err := provider.FetchHistoricalWeather(ctx, s.latitude, s.longitude, from, to)
 	if err != nil {
 		return err
 	}
 
 	s.logger.Info().
 		Str("provider", providerName).
-		Int("count", len(prices)).
-		Msg("fetched historical prices")
+		Int("count", len(observations)).
+		Msg("fetched historical weather observations")
 
-	// Store prices in database
+	// Store observations in database
 	inserted := 0
 	skipped := 0
-	for _, price := range prices {
-		// Check if already exists
-		exists, err := s.db.ExistsForDate(ctx, price.Provider, price.ProductType, price.Date, price.ZipCode)
+	for _, obs := range observations {
+		exists, err := s.db.WeatherExistsForDate(ctx, obs.Provider, obs.Date, s.latitude, s.longitude)
 		if err != nil {
 			s.logger.Error().
 				Err(err).
-				Str("provider", price.Provider).
-				Str("date", price.Date.Format("2006-01-02")).
+				Str("provider", obs.Provider).
+				Str("date", obs.Date.Format("2006-01-02")).
 				Msg("failed to check existence")
 			continue
 		}
@@ -337,12 +347,12 @@ func (s *Scraper) Backfill(ctx context.Context, providerName string, from, to ti
 			continue
 		}
 
-		if err := s.db.InsertPrice(ctx, price, s.storeRawResponse); err != nil {
+		if err := s.db.InsertWeatherObservation(ctx, obs, s.storeRawResponse); err != nil {
 			s.logger.Error().
 				Err(err).
-				Str("provider", price.Provider).
-				Str("date", price.Date.Format("2006-01-02")).
-				Msg("failed to insert price")
+				Str("provider", obs.Provider).
+				Str("date", obs.Date.Format("2006-01-02")).
+				Msg("failed to insert observation")
 		} else {
 			inserted++
 		}
@@ -358,33 +368,18 @@ func (s *Scraper) Backfill(ctx context.Context, providerName string, from, to ti
 }
 
 // HasScrapedToday checks if the provider has been scraped today.
-func (s *Scraper) HasScrapedToday(ctx context.Context, providerName string) (bool, error) {
+func (s *WeatherScraper) HasScrapedToday(ctx context.Context, providerName string) (bool, error) {
 	s.mu.RLock()
-	provider, ok := s.providers[providerName]
+	_, ok := s.providers[providerName]
 	s.mu.RUnlock()
 
 	if !ok {
 		return false, nil
 	}
 
-	// Get today's date
 	today := time.Now().Truncate(24 * time.Hour)
 
-	// Check for each possible product type
-	// For simplicity, we'll just check if any record exists for today
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	// Use the provider's standard product type or check the database
-	zipCode := ""
-	if provider.PriceScope() == models.PriceScopeLocal {
-		// For local providers, we'd need to know the zip code
-		// This is a simplification - in practice you'd want to pass this
-		return false, nil
-	}
-
-	// Check if a record exists for today
-	exists, err := s.db.ExistsForDate(ctx, providerName, "standard", today, zipCode)
+	exists, err := s.db.WeatherExistsForDate(ctx, providerName, today, s.latitude, s.longitude)
 	if err != nil {
 		return false, err
 	}

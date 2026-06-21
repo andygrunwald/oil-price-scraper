@@ -10,8 +10,15 @@ test: ## Runs all unit tests
 	go test -v -race ./...
 
 .PHONY: build
-build: ## Compiles the application
+build: ## Compiles the oil scraper
 	go build -race -ldflags "-X main.version=`git rev-parse --abbrev-ref HEAD`" -o oilscraper ./cmd/oilscraper
+
+.PHONY: build-weather
+build-weather: ## Compiles the weather scraper
+	go build -race -ldflags "-X main.version=`git rev-parse --abbrev-ref HEAD`" -o weatherscraper ./cmd/weatherscraper
+
+.PHONY: build-all
+build-all: build build-weather ## Compiles both scrapers
 
 .PHONY: staticcheck
 staticcheck: ## Runs static code analyzer staticcheck
