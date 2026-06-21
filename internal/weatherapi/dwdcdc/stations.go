@@ -43,7 +43,7 @@ func fetchStationList(ctx context.Context, client *http.Client) ([]Station, erro
 	if err != nil {
 		return nil, fmt.Errorf("fetching station list: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("station list returned status %d", resp.StatusCode)

@@ -109,7 +109,7 @@ func (p *Provider) fetchTimeline(ctx context.Context, lat, lon float64, startDat
 	if err != nil {
 		return nil, fmt.Errorf("executing request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

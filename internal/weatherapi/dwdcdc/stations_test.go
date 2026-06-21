@@ -11,7 +11,7 @@ func TestParseStationList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open fixture: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	stations, err := parseStationList(f)
 	if err != nil {
@@ -107,7 +107,7 @@ func TestFindNearestStation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open fixture: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	stations, err := parseStationList(f)
 	if err != nil {

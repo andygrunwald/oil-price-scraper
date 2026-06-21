@@ -43,7 +43,7 @@ func downloadAndExtractZIP(ctx context.Context, client *http.Client, zipURL stri
 	if err != nil {
 		return nil, fmt.Errorf("downloading ZIP: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("ZIP download returned status %d for %s", resp.StatusCode, zipURL)
@@ -71,7 +71,7 @@ func extractDataFile(zipData []byte) ([]byte, error) {
 			if err != nil {
 				return nil, fmt.Errorf("opening %s in ZIP: %w", f.Name, err)
 			}
-			defer rc.Close()
+			defer func() { _ = rc.Close() }()
 
 			data, err := io.ReadAll(rc)
 			if err != nil {
