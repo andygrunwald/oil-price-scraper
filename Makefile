@@ -21,16 +21,16 @@ test: ## Runs all unit tests
 test-ci: ## Runs all unit tests and writes a coverage profile
 	go test -v -race -coverprofile=coverage.out ./...
 
-.PHONY: build
-build: ## Compiles the oil scraper
+.PHONY: build-oilscraper
+build-oilscraper: ## Compiles the oil scraper
 	go build -race -ldflags "-X main.version=`git rev-parse --abbrev-ref HEAD`" -o oilscraper ./cmd/oilscraper
 
-.PHONY: build-weather
-build-weather: ## Compiles the weather scraper
+.PHONY: build-weatherscraper
+build-weatherscraper: ## Compiles the weather scraper
 	go build -race -ldflags "-X main.version=`git rev-parse --abbrev-ref HEAD`" -o weatherscraper ./cmd/weatherscraper
 
 .PHONY: build-all
-build-all: build build-weather ## Compiles both scrapers
+build-all: build-oilscraper build-weatherscraper ## Compiles both scrapers
 
 .PHONY: staticcheck
 staticcheck: ## Runs static code analyzer staticcheck
