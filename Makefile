@@ -5,9 +5,21 @@ SHELL := /bin/bash
 help: ## help message, list all command
 	@echo -e "$$(grep -hE '^\S+.*:.*##' $(MAKEFILE_LIST) | sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\\x1b[36m\1\\x1b[m:\2/' | column -c2 -t -s :)"
 
+.PHONY: fmt-check
+fmt-check: ## Checks that all Go files are gofmt'ed
+	@if [ -n "$$(gofmt -l .)" ]; then \
+		echo "The following files are not formatted:"; \
+		gofmt -l .; \
+		exit 1; \
+	fi
+
 .PHONY: test
 test: ## Runs all unit tests
 	go test -v -race ./...
+
+.PHONY: test-ci
+test-ci: ## Runs all unit tests and writes a coverage profile
+	go test -v -race -coverprofile=coverage.out ./...
 
 .PHONY: build
 build: ## Compiles the application
@@ -15,8 +27,7 @@ build: ## Compiles the application
 
 .PHONY: staticcheck
 staticcheck: ## Runs static code analyzer staticcheck
-	go install honnef.co/go/tools/cmd/staticcheck@2025.1.1
-	staticcheck ./...
+	go tool staticcheck ./...
 
 .PHONY: vet
 vet: ## Runs go vet
