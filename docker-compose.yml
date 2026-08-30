@@ -10,7 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./migrations:/docker-entrypoint-initdb.d:ro
+      - ./database-schema:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U oilscraper -d oil"]
       interval: 10s
