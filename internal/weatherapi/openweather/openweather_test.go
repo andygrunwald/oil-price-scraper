@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog"
+
+	"github.com/andygrunwald/oil-price-scraper/internal/numeric"
 )
 
 func TestMapResponse(t *testing.T) {
@@ -105,10 +107,10 @@ func TestWindSpeedConversion(t *testing.T) {
 	resp := daySummaryResponse{
 		Date: "2024-03-22",
 		Temperature: temperature{
-			Min: float64Ptr(5.0),
-			Max: float64Ptr(10.0),
+			Min: numeric.Float64Ptr(5.0),
+			Max: numeric.Float64Ptr(10.0),
 		},
-		Wind: wind{Max: windMax{Speed: float64Ptr(10.0)}},
+		Wind: wind{Max: windMax{Speed: numeric.Float64Ptr(10.0)}},
 	}
 
 	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
@@ -116,10 +118,6 @@ func TestWindSpeedConversion(t *testing.T) {
 
 	result := p.mapResponse(resp, 51.4556, 6.7623)
 	assertFloat64Ptr(t, "WindSpeedMaxKmh", result.WindSpeedMaxKmh, 36.0)
-}
-
-func float64Ptr(v float64) *float64 {
-	return &v
 }
 
 func assertFloat64Ptr(t *testing.T, name string, got *float64, want float64) {

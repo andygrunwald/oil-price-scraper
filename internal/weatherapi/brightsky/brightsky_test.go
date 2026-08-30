@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog"
+
+	"github.com/andygrunwald/oil-price-scraper/internal/numeric"
 )
 
 func TestAggregateHourlyToDaily(t *testing.T) {
@@ -16,36 +18,36 @@ func TestAggregateHourlyToDaily(t *testing.T) {
 	records := []weatherRecord{
 		{
 			Timestamp:        "2024-03-22T00:00:00+01:00",
-			Temperature:      float64Ptr(5.0),
-			Precipitation:    float64Ptr(0.0),
-			WindSpeed:        float64Ptr(10.0),
-			WindGustSpeed:    float64Ptr(15.0),
-			Sunshine:         float64Ptr(0.0),
-			CloudCover:       float64Ptr(80.0),
-			RelativeHumidity: float64Ptr(90.0),
-			PressureMSL:      float64Ptr(1013.0),
+			Temperature:      numeric.Float64Ptr(5.0),
+			Precipitation:    numeric.Float64Ptr(0.0),
+			WindSpeed:        numeric.Float64Ptr(10.0),
+			WindGustSpeed:    numeric.Float64Ptr(15.0),
+			Sunshine:         numeric.Float64Ptr(0.0),
+			CloudCover:       numeric.Float64Ptr(80.0),
+			RelativeHumidity: numeric.Float64Ptr(90.0),
+			PressureMSL:      numeric.Float64Ptr(1013.0),
 		},
 		{
 			Timestamp:        "2024-03-22T12:00:00+01:00",
-			Temperature:      float64Ptr(15.0),
-			Precipitation:    float64Ptr(2.0),
-			WindSpeed:        float64Ptr(20.0),
-			WindGustSpeed:    float64Ptr(30.0),
-			Sunshine:         float64Ptr(30.0),
-			CloudCover:       float64Ptr(40.0),
-			RelativeHumidity: float64Ptr(60.0),
-			PressureMSL:      float64Ptr(1015.0),
+			Temperature:      numeric.Float64Ptr(15.0),
+			Precipitation:    numeric.Float64Ptr(2.0),
+			WindSpeed:        numeric.Float64Ptr(20.0),
+			WindGustSpeed:    numeric.Float64Ptr(30.0),
+			Sunshine:         numeric.Float64Ptr(30.0),
+			CloudCover:       numeric.Float64Ptr(40.0),
+			RelativeHumidity: numeric.Float64Ptr(60.0),
+			PressureMSL:      numeric.Float64Ptr(1015.0),
 		},
 		{
 			Timestamp:        "2024-03-22T18:00:00+01:00",
-			Temperature:      float64Ptr(10.0),
-			Precipitation:    float64Ptr(1.5),
-			WindSpeed:        float64Ptr(15.0),
-			WindGustSpeed:    float64Ptr(25.0),
-			Sunshine:         float64Ptr(20.0),
-			CloudCover:       float64Ptr(60.0),
-			RelativeHumidity: float64Ptr(75.0),
-			PressureMSL:      float64Ptr(1014.0),
+			Temperature:      numeric.Float64Ptr(10.0),
+			Precipitation:    numeric.Float64Ptr(1.5),
+			WindSpeed:        numeric.Float64Ptr(15.0),
+			WindGustSpeed:    numeric.Float64Ptr(25.0),
+			Sunshine:         numeric.Float64Ptr(20.0),
+			CloudCover:       numeric.Float64Ptr(60.0),
+			RelativeHumidity: numeric.Float64Ptr(75.0),
+			PressureMSL:      numeric.Float64Ptr(1014.0),
 		},
 	}
 
@@ -99,8 +101,8 @@ func TestAggregateMultipleDays(t *testing.T) {
 	p := New(logger)
 
 	records := []weatherRecord{
-		{Timestamp: "2024-03-22T12:00:00+01:00", Temperature: float64Ptr(10.0)},
-		{Timestamp: "2024-03-23T12:00:00+01:00", Temperature: float64Ptr(15.0)},
+		{Timestamp: "2024-03-22T12:00:00+01:00", Temperature: numeric.Float64Ptr(10.0)},
+		{Timestamp: "2024-03-23T12:00:00+01:00", Temperature: numeric.Float64Ptr(15.0)},
 	}
 
 	results, err := p.aggregateHourlyToDaily(records, 51.4556, 6.7623, []byte("{}"))
@@ -125,7 +127,7 @@ func TestAggregateWithNilValues(t *testing.T) {
 	p := New(logger)
 
 	records := []weatherRecord{
-		{Timestamp: "2024-03-22T12:00:00+01:00", Temperature: float64Ptr(10.0), Precipitation: nil},
+		{Timestamp: "2024-03-22T12:00:00+01:00", Temperature: numeric.Float64Ptr(10.0), Precipitation: nil},
 	}
 
 	results, err := p.aggregateHourlyToDaily(records, 51.4556, 6.7623, []byte("{}"))
@@ -136,10 +138,6 @@ func TestAggregateWithNilValues(t *testing.T) {
 	if results[0].PrecipitationMmSum != nil {
 		t.Errorf("expected PrecipitationMmSum to be nil when no data")
 	}
-}
-
-func float64Ptr(v float64) *float64 {
-	return &v
 }
 
 func assertFloat64Ptr(t *testing.T, name string, got *float64, want float64) {
