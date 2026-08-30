@@ -7,9 +7,9 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/andygrunwald/oil-price-scraper/internal/api"
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi"
 )
 
 // WeatherPrometheusMetrics defines the interface for recording Prometheus metrics.
@@ -47,7 +47,7 @@ func (m *WeatherMetrics) GetSnapshot() WeatherMetricsSnapshot {
 // WeatherScraper orchestrates scraping from multiple weather providers.
 type WeatherScraper struct {
 	db               *database.DB
-	providers        map[string]weatherapi.Provider
+	providers        map[string]api.WeatherProvider
 	providerMetrics  map[string]*WeatherMetrics
 	promMetrics      WeatherPrometheusMetrics
 	storeRawResponse bool
@@ -61,7 +61,7 @@ type WeatherScraper struct {
 func NewWeather(db *database.DB, storeRawResponse bool, latitude, longitude float64, logger zerolog.Logger) *WeatherScraper {
 	return &WeatherScraper{
 		db:               db,
-		providers:        make(map[string]weatherapi.Provider),
+		providers:        make(map[string]api.WeatherProvider),
 		providerMetrics:  make(map[string]*WeatherMetrics),
 		storeRawResponse: storeRawResponse,
 		latitude:         models.RoundCoord(latitude),
@@ -71,7 +71,7 @@ func NewWeather(db *database.DB, storeRawResponse bool, latitude, longitude floa
 }
 
 // RegisterProvider registers a provider with the scraper.
-func (s *WeatherScraper) RegisterProvider(provider weatherapi.Provider) {
+func (s *WeatherScraper) RegisterProvider(provider api.WeatherProvider) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.providers[provider.Name()] = provider
@@ -79,10 +79,10 @@ func (s *WeatherScraper) RegisterProvider(provider weatherapi.Provider) {
 }
 
 // GetProviders returns all registered providers.
-func (s *WeatherScraper) GetProviders() []weatherapi.Provider {
+func (s *WeatherScraper) GetProviders() []api.WeatherProvider {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	providers := make([]weatherapi.Provider, 0, len(s.providers))
+	providers := make([]api.WeatherProvider, 0, len(s.providers))
 	for _, p := range s.providers {
 		providers = append(providers, p)
 	}
@@ -115,7 +115,7 @@ func (s *WeatherScraper) SetPrometheusMetrics(m WeatherPrometheusMetrics) {
 // ScrapeAll scrapes current weather from all registered providers.
 func (s *WeatherScraper) ScrapeAll(ctx context.Context) error {
 	s.mu.RLock()
-	providers := make([]weatherapi.Provider, 0, len(s.providers))
+	providers := make([]api.WeatherProvider, 0, len(s.providers))
 	for _, p := range s.providers {
 		providers = append(providers, p)
 	}
