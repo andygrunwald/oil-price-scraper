@@ -1,5 +1,6 @@
 # Binaries
 /oilscraper
+/weatherscraper
 *.exe
 *.exe~
 *.dll

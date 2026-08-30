@@ -302,7 +302,7 @@ oil-price-scraper/
 │   ├── scheduler/           # Daily scheduler
 │   ├── scraper/             # Scraping orchestration
 │   └── useragent/           # User-Agent rotation
-├── migrations/              # SQL schema
+├── database-schema/         # SQL schema
 ├── .github/workflows/       # CI/CD
 ├── Dockerfile
 ├── docker-compose.yml
