@@ -23,8 +23,6 @@ import (
 )
 
 func runCmd() *cobra.Command {
-	var scrapeHour int
-	var providers string
 	var visualCrossingAPIKey string
 	var openWeatherAPIKey string
 
@@ -52,9 +50,8 @@ func runCmd() *cobra.Command {
 			}
 
 			// Parse providers
-			providerList := strings.Split(providers, ",")
-			for i := range providerList {
-				providerList[i] = strings.TrimSpace(providerList[i])
+			for i := range cfg.Providers {
+				cfg.Providers[i] = strings.TrimSpace(cfg.Providers[i])
 			}
 
 			logger.Info().
@@ -62,8 +59,8 @@ func runCmd() *cobra.Command {
 				Str("commit", Commit).
 				Str("buildDate", BuildDate).
 				Str("httpAddr", cfg.HTTPAddr).
-				Int("scrapeHour", scrapeHour).
-				Strs("providers", providerList).
+				Int("scrapeHour", cfg.ScrapeHour).
+				Strs("providers", cfg.Providers).
 				Float64("latitude", cfg.Latitude).
 				Float64("longitude", cfg.Longitude).
 				Msg("starting weather scraper")
@@ -83,7 +80,7 @@ func runCmd() *cobra.Command {
 			s := weatherscraper.New(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
 
 			// Register providers
-			for _, p := range providerList {
+			for _, p := range cfg.Providers {
 				switch p {
 				case "openmeteo":
 					s.RegisterProvider(openmeteo.New(logger))
@@ -109,7 +106,7 @@ func runCmd() *cobra.Command {
 			}
 
 			// Create scheduler
-			sched := scheduler.New(s, scrapeHour, logger)
+			sched := scheduler.New(s, cfg.ScrapeHour, logger)
 
 			// Create HTTP server
 			httpServer := weatherhttp.NewServer(cfg.HTTPAddr, s, sched, db, logger)
@@ -160,8 +157,8 @@ func runCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&scrapeHour, "scrape-hour", 7, "Hour of day (0-23) to scrape")
-	cmd.Flags().StringVar(&providers, "providers", "openmeteo", "Comma-separated list of providers")
+	cmd.Flags().IntVar(&cfg.ScrapeHour, "scrape-hour", cfg.ScrapeHour, "Hour of day (0-23) to scrape")
+	cmd.Flags().StringSliceVar(&cfg.Providers, "providers", cfg.Providers, "Comma-separated list of providers")
 	cmd.Flags().StringVar(&visualCrossingAPIKey, "visual-crossing-api-key", "", "Visual Crossing API key")
 	cmd.Flags().StringVar(&openWeatherAPIKey, "openweather-api-key", "", "OpenWeather API key")
 
