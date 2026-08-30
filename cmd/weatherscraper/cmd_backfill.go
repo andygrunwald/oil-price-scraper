@@ -8,12 +8,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
+	"github.com/andygrunwald/oil-price-scraper/internal/scraper"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/brightsky"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/dwdcdc"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openmeteo"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openweather"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/visualcrossing"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherscraper"
 )
 
 func backfillCmd() *cobra.Command {
@@ -84,7 +84,7 @@ func backfillCmd() *cobra.Command {
 			}()
 
 			// Create scraper
-			s := weatherscraper.New(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
+			s := scraper.NewWeather(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
 
 			// Register provider
 			switch cfg.Backfill.Provider {
