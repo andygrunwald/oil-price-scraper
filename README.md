@@ -124,12 +124,12 @@ oilscraper backfill \
 | `--zip-code` | `ZIP_CODE` | `47259` | Zip code for local price APIs |
 | `--order-amount` | `ORDER_AMOUNT` | `3000` | Order amount in liters |
 
-### Run Command Flags
+### Run and Scrape Command Flags
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--scrape-hour` | `6` | Hour of day (0-23) to scrape |
-| `--providers` | `heizoel24,hoyer` | Comma-separated list of providers |
+| Flag | Env Variable | Default | Description |
+|------|--------------|---------|-------------|
+| `--scrape-hour` | `SCRAPE_HOUR` | `6` | Hour of day (0-23) to scrape (`run` only, ignored outside 0-23) |
+| `--providers` | `PROVIDERS` | `heizoel24,hoyer` | Comma-separated list of providers |
 
 ### Backfill Command Flags
 

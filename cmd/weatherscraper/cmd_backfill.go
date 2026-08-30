@@ -18,8 +18,6 @@ import (
 
 func backfillCmd() *cobra.Command {
 	var fromStr, toStr string
-	var provider string
-	var minDelay, maxDelay int
 	var visualCrossingAPIKey string
 	var openWeatherAPIKey string
 
@@ -50,25 +48,26 @@ func backfillCmd() *cobra.Command {
 				cfg.OpenWeatherAPIKey = openWeatherAPIKey
 			}
 
-			from, err := time.Parse("2006-01-02", fromStr)
+			var err error
+			cfg.Backfill.From, err = time.Parse("2006-01-02", fromStr)
 			if err != nil {
 				return fmt.Errorf("parsing --from date: %w", err)
 			}
 
-			to := time.Now()
+			cfg.Backfill.To = time.Now()
 			if toStr != "" {
-				to, err = time.Parse("2006-01-02", toStr)
+				cfg.Backfill.To, err = time.Parse("2006-01-02", toStr)
 				if err != nil {
 					return fmt.Errorf("parsing --to date: %w", err)
 				}
 			}
 
 			logger.Info().
-				Str("provider", provider).
-				Str("from", from.Format("2006-01-02")).
-				Str("to", to.Format("2006-01-02")).
-				Int("minDelay", minDelay).
-				Int("maxDelay", maxDelay).
+				Str("provider", cfg.Backfill.Provider).
+				Str("from", cfg.Backfill.From.Format("2006-01-02")).
+				Str("to", cfg.Backfill.To.Format("2006-01-02")).
+				Int("minDelay", cfg.Backfill.MinDelay).
+				Int("maxDelay", cfg.Backfill.MaxDelay).
 				Float64("latitude", cfg.Latitude).
 				Float64("longitude", cfg.Longitude).
 				Msg("starting weather backfill")
@@ -88,7 +87,7 @@ func backfillCmd() *cobra.Command {
 			s := weatherscraper.New(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
 
 			// Register provider
-			switch provider {
+			switch cfg.Backfill.Provider {
 			case "openmeteo":
 				s.RegisterProvider(openmeteo.New(logger))
 			case "brightsky":
@@ -102,16 +101,16 @@ func backfillCmd() *cobra.Command {
 				if cfg.OpenWeatherAPIKey == "" {
 					return fmt.Errorf("--openweather-api-key is required for OpenWeather provider")
 				}
-				s.RegisterProvider(openweather.New(logger, cfg.OpenWeatherAPIKey, minDelay, maxDelay))
+				s.RegisterProvider(openweather.New(logger, cfg.OpenWeatherAPIKey, cfg.Backfill.MinDelay, cfg.Backfill.MaxDelay))
 			case "dwdcdc":
 				s.RegisterProvider(dwdcdc.New(logger))
 			default:
-				return fmt.Errorf("unknown provider: %s", provider)
+				return fmt.Errorf("unknown provider: %s", cfg.Backfill.Provider)
 			}
 
 			// Run backfill
 			ctx := context.Background()
-			if err := s.Backfill(ctx, provider, from, to, minDelay, maxDelay); err != nil {
+			if err := s.Backfill(ctx, cfg.Backfill.Provider, cfg.Backfill.From, cfg.Backfill.To, cfg.Backfill.MinDelay, cfg.Backfill.MaxDelay); err != nil {
 				return fmt.Errorf("backfilling: %w", err)
 			}
 
@@ -122,9 +121,9 @@ func backfillCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&fromStr, "from", "", "Start date (YYYY-MM-DD, required)")
 	cmd.Flags().StringVar(&toStr, "to", "", "End date (YYYY-MM-DD, defaults to today)")
-	cmd.Flags().StringVar(&provider, "provider", "openmeteo", "Provider to backfill from")
-	cmd.Flags().IntVar(&minDelay, "min-delay", 1, "Minimum delay between requests (seconds)")
-	cmd.Flags().IntVar(&maxDelay, "max-delay", 5, "Maximum delay between requests (seconds)")
+	cmd.Flags().StringVar(&cfg.Backfill.Provider, "provider", cfg.Backfill.Provider, "Provider to backfill from")
+	cmd.Flags().IntVar(&cfg.Backfill.MinDelay, "min-delay", cfg.Backfill.MinDelay, "Minimum delay between requests (seconds)")
+	cmd.Flags().IntVar(&cfg.Backfill.MaxDelay, "max-delay", cfg.Backfill.MaxDelay, "Maximum delay between requests (seconds)")
 	cmd.Flags().StringVar(&visualCrossingAPIKey, "visual-crossing-api-key", "", "Visual Crossing API key")
 	cmd.Flags().StringVar(&openWeatherAPIKey, "openweather-api-key", "", "OpenWeather API key")
 

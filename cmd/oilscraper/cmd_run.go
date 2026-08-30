@@ -20,9 +20,6 @@ import (
 )
 
 func runCmd() *cobra.Command {
-	var scrapeHour int
-	var providers string
-
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Start the continuous scraper service",
@@ -39,9 +36,8 @@ func runCmd() *cobra.Command {
 			}
 
 			// Parse providers
-			providerList := strings.Split(providers, ",")
-			for i := range providerList {
-				providerList[i] = strings.TrimSpace(providerList[i])
+			for i := range cfg.Providers {
+				cfg.Providers[i] = strings.TrimSpace(cfg.Providers[i])
 			}
 
 			logger.Info().
@@ -49,8 +45,8 @@ func runCmd() *cobra.Command {
 				Str("commit", Commit).
 				Str("buildDate", BuildDate).
 				Str("httpAddr", cfg.HTTPAddr).
-				Int("scrapeHour", scrapeHour).
-				Strs("providers", providerList).
+				Int("scrapeHour", cfg.ScrapeHour).
+				Strs("providers", cfg.Providers).
 				Msg("starting oil price scraper")
 
 			// Connect to database
@@ -68,7 +64,7 @@ func runCmd() *cobra.Command {
 			s := scraper.New(db, cfg.StoreRawResponse, logger)
 
 			// Register providers
-			for _, p := range providerList {
+			for _, p := range cfg.Providers {
 				switch p {
 				case "heizoel24":
 					s.RegisterProvider(heizoel24.New(logger))
@@ -80,7 +76,7 @@ func runCmd() *cobra.Command {
 			}
 
 			// Create scheduler
-			sched := scheduler.New(s, scrapeHour, logger)
+			sched := scheduler.New(s, cfg.ScrapeHour, logger)
 
 			// Create HTTP server
 			httpServer := http.NewServer(cfg.HTTPAddr, s, sched, db, logger)
@@ -131,8 +127,8 @@ func runCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntVar(&scrapeHour, "scrape-hour", 6, "Hour of day (0-23) to scrape")
-	cmd.Flags().StringVar(&providers, "providers", "heizoel24,hoyer", "Comma-separated list of providers")
+	cmd.Flags().IntVar(&cfg.ScrapeHour, "scrape-hour", cfg.ScrapeHour, "Hour of day (0-23) to scrape")
+	cmd.Flags().StringSliceVar(&cfg.Providers, "providers", cfg.Providers, "Comma-separated list of providers")
 
 	return cmd
 }

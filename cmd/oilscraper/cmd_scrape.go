@@ -14,8 +14,6 @@ import (
 )
 
 func scrapeCmd() *cobra.Command {
-	var providers string
-
 	cmd := &cobra.Command{
 		Use:   "scrape",
 		Short: "Run a one-time scrape",
@@ -32,13 +30,12 @@ func scrapeCmd() *cobra.Command {
 			}
 
 			// Parse providers
-			providerList := strings.Split(providers, ",")
-			for i := range providerList {
-				providerList[i] = strings.TrimSpace(providerList[i])
+			for i := range cfg.Providers {
+				cfg.Providers[i] = strings.TrimSpace(cfg.Providers[i])
 			}
 
 			logger.Info().
-				Strs("providers", providerList).
+				Strs("providers", cfg.Providers).
 				Msg("running one-time scrape")
 
 			// Connect to database
@@ -56,7 +53,7 @@ func scrapeCmd() *cobra.Command {
 			s := scraper.New(db, cfg.StoreRawResponse, logger)
 
 			// Register providers
-			for _, p := range providerList {
+			for _, p := range cfg.Providers {
 				switch p {
 				case "heizoel24":
 					s.RegisterProvider(heizoel24.New(logger))
@@ -78,7 +75,7 @@ func scrapeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&providers, "providers", "heizoel24,hoyer", "Comma-separated list of providers")
+	cmd.Flags().StringSliceVar(&cfg.Providers, "providers", cfg.Providers, "Comma-separated list of providers")
 
 	return cmd
 }

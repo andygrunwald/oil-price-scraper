@@ -17,7 +17,6 @@ import (
 )
 
 func scrapeCmd() *cobra.Command {
-	var providers string
 	var visualCrossingAPIKey string
 	var openWeatherAPIKey string
 
@@ -45,13 +44,12 @@ func scrapeCmd() *cobra.Command {
 			}
 
 			// Parse providers
-			providerList := strings.Split(providers, ",")
-			for i := range providerList {
-				providerList[i] = strings.TrimSpace(providerList[i])
+			for i := range cfg.Providers {
+				cfg.Providers[i] = strings.TrimSpace(cfg.Providers[i])
 			}
 
 			logger.Info().
-				Strs("providers", providerList).
+				Strs("providers", cfg.Providers).
 				Float64("latitude", cfg.Latitude).
 				Float64("longitude", cfg.Longitude).
 				Msg("running one-time weather scrape")
@@ -71,7 +69,7 @@ func scrapeCmd() *cobra.Command {
 			s := weatherscraper.New(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
 
 			// Register providers
-			for _, p := range providerList {
+			for _, p := range cfg.Providers {
 				switch p {
 				case "openmeteo":
 					s.RegisterProvider(openmeteo.New(logger))
@@ -107,7 +105,7 @@ func scrapeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&providers, "providers", "openmeteo", "Comma-separated list of providers")
+	cmd.Flags().StringSliceVar(&cfg.Providers, "providers", cfg.Providers, "Comma-separated list of providers")
 	cmd.Flags().StringVar(&visualCrossingAPIKey, "visual-crossing-api-key", "", "Visual Crossing API key")
 	cmd.Flags().StringVar(&openWeatherAPIKey, "openweather-api-key", "", "OpenWeather API key")
 
