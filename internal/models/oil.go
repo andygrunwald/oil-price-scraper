@@ -1,4 +1,3 @@
-// Package models provides shared data types for the oil price scraper.
 package models
 
 import (
