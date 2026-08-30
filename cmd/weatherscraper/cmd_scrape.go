@@ -7,13 +7,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/andygrunwald/oil-price-scraper/internal/api/brightsky"
+	"github.com/andygrunwald/oil-price-scraper/internal/api/dwdcdc"
+	"github.com/andygrunwald/oil-price-scraper/internal/api/openmeteo"
+	"github.com/andygrunwald/oil-price-scraper/internal/api/openweather"
+	"github.com/andygrunwald/oil-price-scraper/internal/api/visualcrossing"
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/brightsky"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/dwdcdc"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openmeteo"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openweather"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/visualcrossing"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherscraper"
+	"github.com/andygrunwald/oil-price-scraper/internal/scraper"
 )
 
 func scrapeCmd() *cobra.Command {
@@ -66,7 +66,7 @@ func scrapeCmd() *cobra.Command {
 			}()
 
 			// Create scraper
-			s := weatherscraper.New(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
+			s := scraper.NewWeather(db, cfg.StoreRawResponse, cfg.Latitude, cfg.Longitude, logger)
 
 			// Register providers
 			for _, p := range cfg.Providers {

@@ -1,5 +1,4 @@
-// Package weatherscraper provides orchestration for scraping weather data from multiple providers.
-package weatherscraper
+package scraper
 
 import (
 	"context"
@@ -8,67 +7,49 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/andygrunwald/oil-price-scraper/internal/api"
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi"
 )
 
-// PrometheusMetrics defines the interface for recording Prometheus metrics.
-type PrometheusMetrics interface {
-	RecordAPIRequest(provider, status string, duration float64)
-	RecordLastScrape(provider string, timestamp float64)
+// WeatherPrometheusMetrics defines the interface for recording Prometheus metrics.
+type WeatherPrometheusMetrics interface {
+	commonPrometheusMetrics
+
 	RecordCurrentTemperature(provider string, temp float64)
-	RecordDBOperation(operation, status string)
 	RecordObservationsStored(provider string, count float64)
 }
 
-// Metrics holds scraping metrics for a provider.
-type Metrics struct {
-	mu                sync.RWMutex
-	TotalRequests     int64
-	TotalErrors       int64
-	LastScrapeAt      *time.Time
-	LastScrapeSuccess bool
-	LastResponseTime  time.Duration
-	LastTemperature   *float64
-	LastError         *string
-	LastRawResponse   string
+// WeatherMetrics holds scraping metrics for a provider.
+type WeatherMetrics struct {
+	commonMetrics
+
+	LastTemperature *float64
+}
+
+// WeatherMetricsSnapshot is a thread-safe copy of WeatherMetrics data.
+type WeatherMetricsSnapshot struct {
+	commonSnapshot
+
+	LastTemperature *float64
 }
 
 // GetSnapshot returns a thread-safe snapshot of the metrics.
-func (m *Metrics) GetSnapshot() MetricsSnapshot {
+func (m *WeatherMetrics) GetSnapshot() WeatherMetricsSnapshot {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return MetricsSnapshot{
-		TotalRequests:     m.TotalRequests,
-		TotalErrors:       m.TotalErrors,
-		LastScrapeAt:      m.LastScrapeAt,
-		LastScrapeSuccess: m.LastScrapeSuccess,
-		LastResponseTime:  m.LastResponseTime,
-		LastTemperature:   m.LastTemperature,
-		LastError:         m.LastError,
-		LastRawResponse:   m.LastRawResponse,
+	return WeatherMetricsSnapshot{
+		commonSnapshot:  m.snapshot(),
+		LastTemperature: m.LastTemperature,
 	}
-}
-
-// MetricsSnapshot is a thread-safe copy of Metrics data.
-type MetricsSnapshot struct {
-	TotalRequests     int64
-	TotalErrors       int64
-	LastScrapeAt      *time.Time
-	LastScrapeSuccess bool
-	LastResponseTime  time.Duration
-	LastTemperature   *float64
-	LastError         *string
-	LastRawResponse   string
 }
 
 // WeatherScraper orchestrates scraping from multiple weather providers.
 type WeatherScraper struct {
 	db               *database.DB
-	providers        map[string]weatherapi.Provider
-	providerMetrics  map[string]*Metrics
-	promMetrics      PrometheusMetrics
+	providers        map[string]api.WeatherProvider
+	providerMetrics  map[string]*WeatherMetrics
+	promMetrics      WeatherPrometheusMetrics
 	storeRawResponse bool
 	latitude         float64
 	longitude        float64
@@ -76,12 +57,12 @@ type WeatherScraper struct {
 	mu               sync.RWMutex
 }
 
-// New creates a new WeatherScraper.
-func New(db *database.DB, storeRawResponse bool, latitude, longitude float64, logger zerolog.Logger) *WeatherScraper {
+// NewWeather creates a new WeatherScraper.
+func NewWeather(db *database.DB, storeRawResponse bool, latitude, longitude float64, logger zerolog.Logger) *WeatherScraper {
 	return &WeatherScraper{
 		db:               db,
-		providers:        make(map[string]weatherapi.Provider),
-		providerMetrics:  make(map[string]*Metrics),
+		providers:        make(map[string]api.WeatherProvider),
+		providerMetrics:  make(map[string]*WeatherMetrics),
 		storeRawResponse: storeRawResponse,
 		latitude:         models.RoundCoord(latitude),
 		longitude:        models.RoundCoord(longitude),
@@ -90,18 +71,18 @@ func New(db *database.DB, storeRawResponse bool, latitude, longitude float64, lo
 }
 
 // RegisterProvider registers a provider with the scraper.
-func (s *WeatherScraper) RegisterProvider(provider weatherapi.Provider) {
+func (s *WeatherScraper) RegisterProvider(provider api.WeatherProvider) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.providers[provider.Name()] = provider
-	s.providerMetrics[provider.Name()] = &Metrics{}
+	s.providerMetrics[provider.Name()] = &WeatherMetrics{}
 }
 
 // GetProviders returns all registered providers.
-func (s *WeatherScraper) GetProviders() []weatherapi.Provider {
+func (s *WeatherScraper) GetProviders() []api.WeatherProvider {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	providers := make([]weatherapi.Provider, 0, len(s.providers))
+	providers := make([]api.WeatherProvider, 0, len(s.providers))
 	for _, p := range s.providers {
 		providers = append(providers, p)
 	}
@@ -120,21 +101,21 @@ func (s *WeatherScraper) GetProviderNames() []string {
 }
 
 // GetMetrics returns the metrics for a provider.
-func (s *WeatherScraper) GetMetrics(providerName string) *Metrics {
+func (s *WeatherScraper) GetMetrics(providerName string) *WeatherMetrics {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.providerMetrics[providerName]
 }
 
 // SetPrometheusMetrics sets the Prometheus metrics recorder.
-func (s *WeatherScraper) SetPrometheusMetrics(m PrometheusMetrics) {
+func (s *WeatherScraper) SetPrometheusMetrics(m WeatherPrometheusMetrics) {
 	s.promMetrics = m
 }
 
 // ScrapeAll scrapes current weather from all registered providers.
 func (s *WeatherScraper) ScrapeAll(ctx context.Context) error {
 	s.mu.RLock()
-	providers := make([]weatherapi.Provider, 0, len(s.providers))
+	providers := make([]api.WeatherProvider, 0, len(s.providers))
 	for _, p := range s.providers {
 		providers = append(providers, p)
 	}

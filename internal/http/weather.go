@@ -12,7 +12,7 @@ import (
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
 	"github.com/andygrunwald/oil-price-scraper/internal/scheduler"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherscraper"
+	"github.com/andygrunwald/oil-price-scraper/internal/scraper"
 )
 
 // weatherNamespace prefixes every metric the weather scraper exports.
@@ -69,7 +69,7 @@ type WeatherServer struct {
 }
 
 // NewWeatherServer creates a new HTTP server.
-func NewWeatherServer(addr string, s *weatherscraper.WeatherScraper, sched *scheduler.Scheduler, db *database.DB, logger zerolog.Logger) *WeatherServer {
+func NewWeatherServer(addr string, s *scraper.WeatherScraper, sched *scheduler.Scheduler, db *database.DB, logger zerolog.Logger) *WeatherServer {
 	return &WeatherServer{
 		baseServer: newBaseServer(addr, NewWeatherStatusHandler(s, sched, db), logger),
 		metrics:    NewWeatherMetrics(),
@@ -83,14 +83,14 @@ func (s *WeatherServer) Metrics() *WeatherMetrics {
 
 // WeatherStatusHandler handles the /status endpoint.
 type WeatherStatusHandler struct {
-	scraper   *weatherscraper.WeatherScraper
+	scraper   *scraper.WeatherScraper
 	scheduler *scheduler.Scheduler
 	db        *database.DB
 	startTime time.Time
 }
 
 // NewWeatherStatusHandler creates a new WeatherStatusHandler.
-func NewWeatherStatusHandler(s *weatherscraper.WeatherScraper, sched *scheduler.Scheduler, db *database.DB) *WeatherStatusHandler {
+func NewWeatherStatusHandler(s *scraper.WeatherScraper, sched *scheduler.Scheduler, db *database.DB) *WeatherStatusHandler {
 	return &WeatherStatusHandler{
 		scraper:   s,
 		scheduler: sched,
