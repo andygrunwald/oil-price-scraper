@@ -7,9 +7,9 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/andygrunwald/oil-price-scraper/internal/api"
-	"github.com/andygrunwald/oil-price-scraper/internal/database"
-	"github.com/andygrunwald/oil-price-scraper/internal/models"
+	"github.com/andygrunwald/heizsaison/internal/api"
+	"github.com/andygrunwald/heizsaison/internal/database"
+	"github.com/andygrunwald/heizsaison/internal/models"
 )
 
 // WeatherPrometheusMetrics defines the interface for recording Prometheus metrics.

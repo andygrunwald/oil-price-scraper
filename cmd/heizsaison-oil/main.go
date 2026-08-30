@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
-	"github.com/andygrunwald/oil-price-scraper/internal/config"
+	"github.com/andygrunwald/heizsaison/internal/config"
 )
 
 var (

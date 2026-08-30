@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:18.6
-    container_name: oilscraper-postgres
+    container_name: heizsaison-postgres
     environment:
       POSTGRES_USER: oilscraper
       POSTGRES_PASSWORD: oilscraper
@@ -18,9 +18,9 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - oilscraper
+      - heizsaison
 
-  oilscraper:
+  oil:
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,7 +28,7 @@ services:
         VERSION: dev
         COMMIT: local
         BUILD_DATE: ${BUILD_DATE:-unknown}
-    container_name: oilscraper-app
+    container_name: heizsaison-oil
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,10 +42,10 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - oilscraper
+      - heizsaison
     restart: unless-stopped
 
-  weatherscraper:
+  weather:
     build:
       context: .
       dockerfile: Dockerfile.weather
@@ -53,7 +53,7 @@ services:
         VERSION: dev
         COMMIT: local
         BUILD_DATE: ${BUILD_DATE:-unknown}
-    container_name: weatherscraper-app
+    container_name: heizsaison-weather
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,12 +68,12 @@ services:
     ports:
       - "8081:8081"
     networks:
-      - oilscraper
+      - heizsaison
     restart: unless-stopped
 
 volumes:
   postgres_data:
 
 networks:
-  oilscraper:
+  heizsaison:
     driver: bridge
