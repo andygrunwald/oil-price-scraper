@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/andygrunwald/oil-price-scraper/internal/numeric"
 )
 
 func TestParseDataFile(t *testing.T) {
@@ -78,15 +80,15 @@ func TestParseDWDFloat(t *testing.T) {
 		input string
 		want  *float64
 	}{
-		{"13.9", float64Ptr(13.9)},
+		{"13.9", numeric.Float64Ptr(13.9)},
 		{"-999", nil},
 		{"-999.0", nil},
 		{"-999.00", nil},
 		{"", nil},
 		{"   ", nil},
-		{"0.0", float64Ptr(0.0)},
-		{"-2.5", float64Ptr(-2.5)},
-		{"  7.8  ", float64Ptr(7.8)},
+		{"0.0", numeric.Float64Ptr(0.0)},
+		{"-2.5", numeric.Float64Ptr(-2.5)},
+		{"  7.8  ", numeric.Float64Ptr(7.8)},
 	}
 
 	for _, tt := range tests {
@@ -109,13 +111,13 @@ func TestUnitConversions(t *testing.T) {
 	rec := dailyRecord{
 		StationID: "02110",
 		Date:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		FM:        float64Ptr(10.0), // 10 m/s
-		FX:        float64Ptr(20.0), // 20 m/s
-		SDK:       float64Ptr(5.0),  // 5 hours
-		NM:        float64Ptr(4.0),  // 4 okta
-		TMK:       float64Ptr(5.0),
-		TXK:       float64Ptr(10.0),
-		TNK:       float64Ptr(0.0),
+		FM:        numeric.Float64Ptr(10.0), // 10 m/s
+		FX:        numeric.Float64Ptr(20.0), // 20 m/s
+		SDK:       numeric.Float64Ptr(5.0),  // 5 hours
+		NM:        numeric.Float64Ptr(4.0),  // 4 okta
+		TMK:       numeric.Float64Ptr(5.0),
+		TXK:       numeric.Float64Ptr(10.0),
+		TNK:       numeric.Float64Ptr(0.0),
 	}
 
 	result := recordToWeatherResult(rec, 51.4556, 6.7623, nil)
@@ -199,10 +201,6 @@ func TestFilterByDateRangeEmpty(t *testing.T) {
 	if len(filtered) != 0 {
 		t.Errorf("expected 0 records, got %d", len(filtered))
 	}
-}
-
-func float64Ptr(v float64) *float64 {
-	return &v
 }
 
 func assertFloat64Ptr(t *testing.T, name string, got *float64, want float64) {
