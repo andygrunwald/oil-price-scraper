@@ -2,7 +2,7 @@
 
 Both scrapers start an HTTP server alongside the `run` command and serve the same three routes: `/metrics`, `/status` and `/health`. Only the `/status` payload and the metric name prefix differ between them.
 
-The address is set with `--http-addr` / `HTTP_ADDR` and defaults to `:8080` for `oilscraper` and `:8081` for `weatherscraper`. See [CONFIGURATION.md](CONFIGURATION.md) for the full flag reference.
+The address is set with `--http-addr` / `HTTP_ADDR` and defaults to `:8080` for `heizsaison-oil` and `:8081` for `heizsaison-weather`. See [CONFIGURATION.md](CONFIGURATION.md) for the full flag reference.
 
 ---
 
@@ -49,7 +49,7 @@ The standard Go runtime and process collectors (`go_goroutines`, `go_memstats_*`
 
 Returns `200 OK` with a JSON snapshot of the scheduler, every registered provider and the database. Provider statistics are in-memory counters, so they reset when the process restarts.
 
-### `oilscraper`
+### `heizsaison-oil`
 
 ```json
 {
@@ -77,7 +77,7 @@ Returns `200 OK` with a JSON snapshot of the scheduler, every registered provide
 }
 ```
 
-### `weatherscraper`
+### `heizsaison-weather`
 
 ```json
 {
@@ -116,8 +116,8 @@ Returns `200 OK` with a JSON snapshot of the scheduler, every registered provide
 | `last_scheduled_scrape_at` | Last scrape the scheduler triggered. Omitted before the first run |
 | `providers.<name>.last_scrape_success` | Outcome of the most recent attempt |
 | `providers.<name>.last_response_time_ms` | Duration of the most recent API call |
-| `providers.<name>.last_price` | Latest price in EUR per 100L (`oilscraper`) |
-| `providers.<name>.last_temperature` | Latest temperature in Celsius (`weatherscraper`). Omitted when unset |
+| `providers.<name>.last_price` | Latest price in EUR per 100L (`heizsaison-oil`) |
+| `providers.<name>.last_temperature` | Latest temperature in Celsius (`heizsaison-weather`). Omitted when unset |
 | `providers.<name>.last_error` | Error message of the most recent failure, `null` after a success |
 | `providers.<name>.last_raw_response` | Raw API response of the most recent scrape, truncated at 10000 characters. Omitted when the provider returned none |
 | `database.connected` | Result of a live `Ping()` against PostgreSQL |
