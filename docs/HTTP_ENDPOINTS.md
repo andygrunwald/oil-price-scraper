@@ -8,7 +8,7 @@ The address is set with `--http-addr` / `HTTP_ADDR` and defaults to `:8080` for 
 
 ## `/metrics` - Prometheus Metrics
 
-Prometheus exposition format, served by `promhttp`. Every metric is prefixed with the scraper's namespace: `oilscraper_` or `weatherscraper_`.
+Prometheus exposition format, served by `promhttp`. Every metric is prefixed with the scraper's namespace: `heizsaison_oil_` or `heizsaison_weather_`.
 
 ### Shared Metrics
 
@@ -25,20 +25,20 @@ Both scrapers export these four with identical types, labels and help text:
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `oilscraper_current_price_eur` | Gauge | `provider`, `scope`, `product_type` | Current oil price in EUR per 100L |
-| `oilscraper_prices_stored_total` | Gauge | `provider` | Total number of prices stored in the database by provider |
-| `weatherscraper_current_temperature_celsius` | Gauge | `provider` | Current temperature in Celsius |
-| `weatherscraper_observations_stored_total` | Gauge | `provider` | Total number of observations stored in the database by provider |
+| `heizsaison_oil_current_price_eur` | Gauge | `provider`, `scope`, `product_type` | Current oil price in EUR per 100L |
+| `heizsaison_oil_prices_stored_total` | Gauge | `provider` | Total number of prices stored in the database by provider |
+| `heizsaison_weather_current_temperature_celsius` | Gauge | `provider` | Current temperature in Celsius |
+| `heizsaison_weather_observations_stored_total` | Gauge | `provider` | Total number of observations stored in the database by provider |
 
 ### Example
 
 ```
-oilscraper_api_requests_total{provider="heizoel24",status="success"} 365
-oilscraper_api_request_duration_seconds_bucket{provider="heizoel24",le="0.25"} 340
-oilscraper_last_scrape_timestamp{provider="heizoel24"} 1.7683968e+09
-oilscraper_db_operations_total{operation="insert",status="success"} 1234
-oilscraper_current_price_eur{provider="heizoel24",scope="national",product_type="standard"} 97.81
-oilscraper_prices_stored_total{provider="heizoel24"} 1234
+heizsaison_oil_api_requests_total{provider="heizoel24",status="success"} 365
+heizsaison_oil_api_request_duration_seconds_bucket{provider="heizoel24",le="0.25"} 340
+heizsaison_oil_last_scrape_timestamp{provider="heizoel24"} 1.7683968e+09
+heizsaison_oil_db_operations_total{operation="insert",status="success"} 1234
+heizsaison_oil_current_price_eur{provider="heizoel24",scope="national",product_type="standard"} 97.81
+heizsaison_oil_prices_stored_total{provider="heizoel24"} 1234
 ```
 
 The standard Go runtime and process collectors (`go_goroutines`, `go_memstats_*`, `process_*`) are registered by default and exported alongside these.

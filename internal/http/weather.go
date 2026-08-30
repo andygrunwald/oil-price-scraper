@@ -16,7 +16,7 @@ import (
 )
 
 // weatherNamespace prefixes every metric the weather scraper exports.
-const weatherNamespace = "weatherscraper"
+const weatherNamespace = "heizsaison_weather"
 
 // WeatherMetrics holds all Prometheus metrics for the weather scraper.
 type WeatherMetrics struct {

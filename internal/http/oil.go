@@ -16,7 +16,7 @@ import (
 )
 
 // oilNamespace prefixes every metric the oil price scraper exports.
-const oilNamespace = "oilscraper"
+const oilNamespace = "heizsaison_oil"
 
 // Metrics holds all Prometheus metrics for the oil price scraper.
 type Metrics struct {
