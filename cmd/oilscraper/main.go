@@ -21,10 +21,10 @@ var (
 	BuildDate = "unknown"
 )
 
-var cfg *config.Config
+var cfg *config.Oil
 
 func main() {
-	cfg = config.DefaultConfig()
+	cfg = config.DefaultOil()
 	cfg.LoadFromEnv()
 
 	rootCmd := &cobra.Command{

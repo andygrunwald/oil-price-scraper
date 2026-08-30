@@ -1,4 +1,8 @@
-// Package config provides configuration structures and loading for the oil price scraper.
+// Package config provides configuration structures and loading for the oil
+// price scraper and the weather scraper.
+//
+// Common holds everything both scrapers need. Oil and Weather embed it and add
+// their own settings, so a shared setting is declared and parsed exactly once.
 package config
 
 import (
@@ -8,8 +12,8 @@ import (
 	"time"
 )
 
-// Config holds all configuration for the oil price scraper.
-type Config struct {
+// Common holds the configuration shared by both scrapers.
+type Common struct {
 	// PostgreSQL connection string
 	PostgresDSN string
 	// Log level (debug, info, warn, error)
@@ -20,10 +24,6 @@ type Config struct {
 	StoreRawResponse bool
 	// HTTP server address
 	HTTPAddr string
-	// Zip code for local price APIs
-	ZipCode string
-	// Order amount in liters
-	OrderAmount int
 	// Scrape hour (0-23)
 	ScrapeHour int
 	// Enabled providers
@@ -46,28 +46,9 @@ type BackfillConfig struct {
 	MaxDelay int
 }
 
-// DefaultConfig returns a Config with default values.
-func DefaultConfig() *Config {
-	return &Config{
-		PostgresDSN:      "",
-		LogLevel:         "info",
-		LogFormat:        "json",
-		StoreRawResponse: false,
-		HTTPAddr:         ":8080",
-		ZipCode:          "",
-		OrderAmount:      3000,
-		ScrapeHour:       6,
-		Providers:        []string{"heizoel24", "hoyer"},
-		Backfill: BackfillConfig{
-			Provider: "heizoel24",
-			MinDelay: 1,
-			MaxDelay: 5,
-		},
-	}
-}
-
-// LoadFromEnv loads configuration from environment variables.
-func (c *Config) LoadFromEnv() {
+// LoadFromEnv loads the shared configuration from environment variables.
+// Values that fail to parse are ignored, leaving the existing value in place.
+func (c *Common) LoadFromEnv() {
 	if v := os.Getenv("POSTGRES_DSN"); v != "" {
 		c.PostgresDSN = v
 	}
@@ -82,14 +63,6 @@ func (c *Config) LoadFromEnv() {
 	}
 	if v := os.Getenv("HTTP_ADDR"); v != "" {
 		c.HTTPAddr = v
-	}
-	if v := os.Getenv("ZIP_CODE"); v != "" {
-		c.ZipCode = v
-	}
-	if v := os.Getenv("ORDER_AMOUNT"); v != "" {
-		if i, err := strconv.Atoi(v); err == nil {
-			c.OrderAmount = i
-		}
 	}
 	if v := os.Getenv("SCRAPE_HOUR"); v != "" {
 		if i, err := strconv.Atoi(v); err == nil && i >= 0 && i <= 23 {

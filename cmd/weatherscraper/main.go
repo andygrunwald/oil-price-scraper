@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherconfig"
+	"github.com/andygrunwald/oil-price-scraper/internal/config"
 )
 
 var (
@@ -21,10 +21,10 @@ var (
 	BuildDate = "unknown"
 )
 
-var cfg *weatherconfig.Config
+var cfg *config.Weather
 
 func main() {
-	cfg = weatherconfig.DefaultConfig()
+	cfg = config.DefaultWeather()
 	cfg.LoadFromEnv()
 
 	rootCmd := &cobra.Command{
