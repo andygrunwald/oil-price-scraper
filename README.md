@@ -40,13 +40,13 @@ curl http://localhost:8081/status  # weatherscraper
 
 ```bash
 docker run -d \
-  -e POSTGRES_DSN="postgres://user:password@host:5432/oil?sslmode=disable" \
+  -e POSTGRES_DSN="postgres://user:password@host:5432/heizsaison?sslmode=disable" \
   -e ZIP_CODE="47259" \
   -p 8080:8080 \
   ghcr.io/andygrunwald/oil-price-scraper:latest
 
 docker run -d \
-  -e POSTGRES_DSN="postgres://user:password@host:5432/oil?sslmode=disable" \
+  -e POSTGRES_DSN="postgres://user:password@host:5432/heizsaison?sslmode=disable" \
   -e LATITUDE="51.4556" \
   -e LONGITUDE="6.7623" \
   -p 8081:8081 \
@@ -74,20 +74,20 @@ Both binaries share the same four subcommands:
 ```bash
 # Collect oil prices daily
 oilscraper run \
-  --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
+  --postgres-dsn "postgres://user:password@localhost:5432/heizsaison?sslmode=disable" \
   --zip-code "47259" \
   --providers heizoel24,hoyer
 
 # Collect weather daily
 weatherscraper run \
-  --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
+  --postgres-dsn "postgres://user:password@localhost:5432/heizsaison?sslmode=disable" \
   --latitude 51.4556 \
   --longitude 6.7623 \
   --providers openmeteo,brightsky
 
 # Import a year of history
 oilscraper backfill \
-  --postgres-dsn "postgres://user:password@localhost:5432/oil?sslmode=disable" \
+  --postgres-dsn "postgres://user:password@localhost:5432/heizsaison?sslmode=disable" \
   --zip-code "47259" \
   --provider heizoel24 \
   --from 2024-01-01 --to 2024-12-31

@@ -89,7 +89,7 @@ The published images take the same environment variables:
 
 ```bash
 docker run -d \
-  -e POSTGRES_DSN="postgres://user:password@host:5432/oil?sslmode=disable" \
+  -e POSTGRES_DSN="postgres://user:password@host:5432/heizsaison?sslmode=disable" \
   -e ZIP_CODE="47259" \
   -p 8080:8080 \
   ghcr.io/andygrunwald/oil-price-scraper:latest

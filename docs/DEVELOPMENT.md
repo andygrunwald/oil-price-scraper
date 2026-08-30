@@ -42,7 +42,7 @@ docker-compose up -d postgres
 ```bash
 # Oil prices
 go run ./cmd/oilscraper run \
-  --postgres-dsn "postgres://oilscraper:oilscraper@localhost:5432/oil?sslmode=disable" \
+  --postgres-dsn "postgres://heizsaison:heizsaison@localhost:5432/heizsaison?sslmode=disable" \
   --zip-code "47259" \
   --log-format console \
   --log-level debug
@@ -51,7 +51,7 @@ go run ./cmd/oilscraper run \
 ```bash
 # Weather
 go run ./cmd/weatherscraper run \
-  --postgres-dsn "postgres://oilscraper:oilscraper@localhost:5432/oil?sslmode=disable" \
+  --postgres-dsn "postgres://heizsaison:heizsaison@localhost:5432/heizsaison?sslmode=disable" \
   --latitude 51.4556 \
   --longitude 6.7623 \
   --log-format console \
