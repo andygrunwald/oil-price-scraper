@@ -2,7 +2,7 @@
 
 Both scrapers log at `info` level in JSON format by default. This document describes how to switch to `debug`, which reveals the outbound API requests, the per-record insert and skip decisions, and other details that are otherwise hidden.
 
-Logging is handled by [zerolog](https://github.com/rs/zerolog). The `oilscraper` and `weatherscraper` binaries are configured identically.
+Logging is handled by [zerolog](https://github.com/rs/zerolog). The `oilscraper` and `weatherscraper` binaries are configured identically. For every other setting, see [CONFIGURATION.md](CONFIGURATION.md).
 
 ---
 
