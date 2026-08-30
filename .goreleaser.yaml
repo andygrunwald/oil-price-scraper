@@ -70,7 +70,8 @@ changelog:
       - Merge branch
 
 dockers_v2:
-  - images:
+  - id: heizsaison-oil
+    images:
       - "ghcr.io/andygrunwald/heizsaison-oil"
     ids:
       - heizsaison-oil
@@ -90,7 +91,8 @@ dockers_v2:
       "org.opencontainers.image.version": "{{ .Version }}"
       "org.opencontainers.image.revision": "{{ .FullCommit }}"
       "org.opencontainers.image.source": "{{ .GitURL }}"
-  - images:
+  - id: heizsaison-weather
+    images:
       - "ghcr.io/andygrunwald/heizsaison-weather"
     ids:
       - heizsaison-weather
