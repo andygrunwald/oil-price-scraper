@@ -2,7 +2,7 @@
 
 This document describes each oil price provider integrated into the oil scraper, including API details, data coverage, authentication requirements, and a detailed breakdown of which data points are scraped and stored versus available but not captured.
 
-All providers return daily oil price observations that are stored in the `oil_prices` PostgreSQL table. See [EXAMPLE_QUERIES.md](EXAMPLE_QUERIES.md) for SQL query examples.
+All providers return daily oil price observations that are stored in the `oil_prices` PostgreSQL table. See [OIL_EXAMPLE_QUERIES.md](OIL_EXAMPLE_QUERIES.md) for SQL query examples.
 
 ## Table of Contents
 
