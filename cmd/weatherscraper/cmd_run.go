@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/andygrunwald/oil-price-scraper/internal/database"
+	"github.com/andygrunwald/oil-price-scraper/internal/http"
 	"github.com/andygrunwald/oil-price-scraper/internal/scheduler"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/brightsky"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/dwdcdc"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openmeteo"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/openweather"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherapi/visualcrossing"
-	"github.com/andygrunwald/oil-price-scraper/internal/weatherhttp"
 	"github.com/andygrunwald/oil-price-scraper/internal/weatherscraper"
 )
 
@@ -109,7 +109,7 @@ func runCmd() *cobra.Command {
 			sched := scheduler.New(s, cfg.ScrapeHour, logger)
 
 			// Create HTTP server
-			httpServer := weatherhttp.NewServer(cfg.HTTPAddr, s, sched, db, logger)
+			httpServer := http.NewWeatherServer(cfg.HTTPAddr, s, sched, db, logger)
 
 			// Wire Prometheus metrics to scraper
 			s.SetPrometheusMetrics(httpServer.Metrics())
