@@ -62,7 +62,7 @@ func New(db *database.DB, storeRawResponse bool, logger zerolog.Logger) *Scraper
 		providers:        make(map[string]api.Provider),
 		providerMetrics:  make(map[string]*Metrics),
 		storeRawResponse: storeRawResponse,
-		logger:           logger.With().Str("component", "scraper").Logger(),
+		logger:           logger.With().Str("component", "oil").Logger(),
 	}
 }
 

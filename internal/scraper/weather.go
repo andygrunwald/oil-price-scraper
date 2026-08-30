@@ -66,7 +66,7 @@ func NewWeather(db *database.DB, storeRawResponse bool, latitude, longitude floa
 		storeRawResponse: storeRawResponse,
 		latitude:         models.RoundCoord(latitude),
 		longitude:        models.RoundCoord(longitude),
-		logger:           logger.With().Str("component", "weatherscraper").Logger(),
+		logger:           logger.With().Str("component", "weather").Logger(),
 	}
 }
 

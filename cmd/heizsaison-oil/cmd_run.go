@@ -47,7 +47,7 @@ func runCmd() *cobra.Command {
 				Str("httpAddr", cfg.HTTPAddr).
 				Int("scrapeHour", cfg.ScrapeHour).
 				Strs("providers", cfg.Providers).
-				Msg("starting oil price scraper")
+				Msg("starting heizsaison-oil")
 
 			// Connect to database
 			db, err := database.New(cfg.PostgresDSN, logger)

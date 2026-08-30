@@ -65,7 +65,7 @@ docker run \
 
 ## Filtering
 
-Every component logs with a `component` field (`scraper`, `weatherscraper`, `database`, `scheduler`, `http`), and every API provider with a `provider` field. In JSON format, filter on them with `jq`:
+Every component logs with a `component` field (`oil`, `weather`, `database`, `scheduler`, `http`), and every API provider with a `provider` field. In JSON format, filter on them with `jq`:
 
 ```bash
 oilscraper scrape --log-level debug | jq 'select(.component == "database")'

@@ -63,7 +63,7 @@ func runCmd() *cobra.Command {
 				Strs("providers", cfg.Providers).
 				Float64("latitude", cfg.Latitude).
 				Float64("longitude", cfg.Longitude).
-				Msg("starting weather scraper")
+				Msg("starting heizsaison-weather")
 
 			// Connect to database
 			db, err := database.New(cfg.PostgresDSN, logger)

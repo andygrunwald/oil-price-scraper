@@ -15,10 +15,10 @@ import (
 	"github.com/andygrunwald/heizsaison/internal/scraper"
 )
 
-// oilNamespace prefixes every metric the oil price scraper exports.
+// oilNamespace prefixes every metric the oil scraper exports.
 const oilNamespace = "heizsaison_oil"
 
-// Metrics holds all Prometheus metrics for the oil price scraper.
+// Metrics holds all Prometheus metrics for the oil scraper.
 type Metrics struct {
 	commonMetrics
 
