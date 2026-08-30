@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"net/url"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/andygrunwald/oil-price-scraper/internal/models"
+	"github.com/andygrunwald/oil-price-scraper/internal/numeric"
 	"github.com/andygrunwald/oil-price-scraper/internal/useragent"
 )
 
@@ -237,41 +237,41 @@ func (p *Provider) aggregateHourlyToDaily(records []weatherRecord, lat, lon floa
 		}
 
 		if len(bucket.temps) > 0 {
-			minT := sliceMin(bucket.temps)
-			maxT := sliceMax(bucket.temps)
-			meanT := sliceMean(bucket.temps)
+			minT := numeric.SliceMin(bucket.temps)
+			maxT := numeric.SliceMax(bucket.temps)
+			meanT := numeric.SliceMean(bucket.temps)
 			result.TemperatureMinC = &minT
 			result.TemperatureMaxC = &maxT
 			result.TemperatureMeanC = &meanT
 		}
 		if len(bucket.precips) > 0 {
-			sum := sliceSum(bucket.precips)
+			sum := numeric.SliceSum(bucket.precips)
 			result.PrecipitationMmSum = &sum
 		}
 		if len(bucket.winds) > 0 {
-			maxW := sliceMax(bucket.winds)
+			maxW := numeric.SliceMax(bucket.winds)
 			result.WindSpeedMaxKmh = &maxW
 		}
 		if len(bucket.gusts) > 0 {
-			maxG := sliceMax(bucket.gusts)
+			maxG := numeric.SliceMax(bucket.gusts)
 			result.WindGustMaxKmh = &maxG
 		}
 		if len(bucket.sunshine) > 0 {
 			// Bright Sky returns sunshine in minutes per hour; sum and convert to seconds
-			sumMin := sliceSum(bucket.sunshine)
+			sumMin := numeric.SliceSum(bucket.sunshine)
 			sumSec := sumMin * 60
 			result.SunshineDurationS = &sumSec
 		}
 		if len(bucket.clouds) > 0 {
-			mean := sliceMean(bucket.clouds)
+			mean := numeric.SliceMean(bucket.clouds)
 			result.CloudCoverPercent = &mean
 		}
 		if len(bucket.humidity) > 0 {
-			mean := sliceMean(bucket.humidity)
+			mean := numeric.SliceMean(bucket.humidity)
 			result.HumidityPercent = &mean
 		}
 		if len(bucket.pressure) > 0 {
-			mean := sliceMean(bucket.pressure)
+			mean := numeric.SliceMean(bucket.pressure)
 			result.PressureHpa = &mean
 		}
 
@@ -279,36 +279,4 @@ func (p *Provider) aggregateHourlyToDaily(records []weatherRecord, lat, lon floa
 	}
 
 	return results, nil
-}
-
-func sliceMin(s []float64) float64 {
-	m := math.MaxFloat64
-	for _, v := range s {
-		if v < m {
-			m = v
-		}
-	}
-	return m
-}
-
-func sliceMax(s []float64) float64 {
-	m := -math.MaxFloat64
-	for _, v := range s {
-		if v > m {
-			m = v
-		}
-	}
-	return m
-}
-
-func sliceMean(s []float64) float64 {
-	return sliceSum(s) / float64(len(s))
-}
-
-func sliceSum(s []float64) float64 {
-	var sum float64
-	for _, v := range s {
-		sum += v
-	}
-	return sum
 }
